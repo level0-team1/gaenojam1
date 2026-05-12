@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 42bf6495cb49cda4a8d90a1a98160eaf, type: 3}
+  m_Name: Ganjangjeyuk
+  m_EditorClassIdentifier: Assembly-CSharp::RecipeSO
+  recipeName: ganjangjeyuk
+  resultImage: {fileID: 0}
+  requiredIngredients:
+  - ingredient: {fileID: 11400000, guid: a8e6d810685d65d47af1bc8ca63560cb, type: 2}
+    amount: 1
+  - ingredient: {fileID: 11400000, guid: 69127df5cdd2f3b4daafbb1a3d63adfc, type: 2}
+    amount: 1
+  - ingredient: {fileID: 11400000, guid: 0f7af78905f94864496c737d38184bf4, type: 2}
+    amount: 1
+  - ingredient: {fileID: 11400000, guid: 15275c17ba001b74caa993706ce8f5fc, type: 2}
+    amount: 1
