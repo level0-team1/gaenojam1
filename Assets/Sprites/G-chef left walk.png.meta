@@ -1,10 +1,25 @@
 fileFormatVersion: 2
-guid: 34645487657ead24e90c6a192b46a559
+guid: 34a0d26591e722240a70bc75c8def059
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 6049605792901559095
-    second: Water_0
+      213: -5713704889996527416
+    second: G-chef left walk_0
+  - first:
+      213: -2934717586358966622
+    second: G-chef left walk_1
+  - first:
+      213: 8245045932927287025
+    second: G-chef left walk_2
+  - first:
+      213: -5066670660527146635
+    second: G-chef left walk_3
+  - first:
+      213: 5839217629426853086
+    second: G-chef left walk_4
+  - first:
+      213: -6217008363681688307
+    second: G-chef left walk_5
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -51,7 +66,7 @@ TextureImporter:
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 16
+  spritePixelsToUnits: 100
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -100,89 +115,133 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Water_0
+      name: G-chef left walk_0
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
-        width: 16
-        height: 16
+        x: 13
+        y: 1
+        width: 36
+        height: 63
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 733fa0d9a6484f350800000000000000
-      internalID: 6049605792901559095
+      spriteID: 8c83850dca7d4b0b0800000000000000
+      internalID: -5713704889996527416
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Water_1
+      name: G-chef left walk_1
       rect:
         serializedVersion: 2
-        x: 16
-        y: 0
-        width: 16
-        height: 16
+        x: 77
+        y: 1
+        width: 36
+        height: 63
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: 525766925dcac09418c70f5328a41b31
-      internalID: 2127662691
+      spriteID: 2a66bfc67e9c547d0800000000000000
+      internalID: -2934717586358966622
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Water_2
+      name: G-chef left walk_2
       rect:
         serializedVersion: 2
-        x: 32
+        x: 141
         y: 0
-        width: 16
-        height: 16
+        width: 36
+        height: 63
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: 3ddca379ddec58445a5f9f2c7e35c8b1
-      internalID: -304997124
+      spriteID: 1fef8e487994c6270800000000000000
+      internalID: 8245045932927287025
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Water_3
+      name: G-chef left walk_3
       rect:
         serializedVersion: 2
-        x: 48
-        y: 0
-        width: 16
-        height: 16
+        x: 205
+        y: 1
+        width: 36
+        height: 63
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: f5f89841e7fa5794980ed06f21b96f22
-      internalID: -698745262
+      spriteID: 579b26de0e19fa9b0800000000000000
+      internalID: -5066670660527146635
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: G-chef left walk_4
+      rect:
+        serializedVersion: 2
+        x: 269
+        y: 1
+        width: 36
+        height: 63
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ed4af281f71190150800000000000000
+      internalID: 5839217629426853086
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: G-chef left walk_5
+      rect:
+        serializedVersion: 2
+        x: 333
+        y: 0
+        width: 36
+        height: 63
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d05de1515dfb8b9a0800000000000000
+      internalID: -6217008363681688307
       vertices: []
       indices: 
       edges: []
@@ -191,7 +250,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: ea5f744c95d0a4c4dabefc64ed86c4af
+    spriteID: 
     internalID: 0
     vertices: []
     indices: 
@@ -199,14 +258,14 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries:
-      - key: SpriteEditor.SliceSettings
-        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":16.0,"y":16.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
+      entries: []
     nameFileIdTable:
-      Water_0: 6049605792901559095
-      Water_1: 2127662691
-      Water_2: -304997124
-      Water_3: -698745262
+      G-chef left walk_0: -5713704889996527416
+      G-chef left walk_1: -2934717586358966622
+      G-chef left walk_2: 8245045932927287025
+      G-chef left walk_3: -5066670660527146635
+      G-chef left walk_4: 5839217629426853086
+      G-chef left walk_5: -6217008363681688307
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
