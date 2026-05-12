@@ -1,10 +1,19 @@
 fileFormatVersion: 2
-guid: 34645487657ead24e90c6a192b46a559
+guid: ad549adf7fa627042ade0dfe97f06760
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 6049605792901559095
-    second: Water_0
+      213: 7444588279260093485
+    second: G-chef front work_0
+  - first:
+      213: -5552523593611714897
+    second: G-chef front work_1
+  - first:
+      213: -8610313189569753956
+    second: G-chef front work_2
+  - first:
+      213: -4339752373545995618
+    second: G-chef front work_3
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -51,7 +60,7 @@ TextureImporter:
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 16
+  spritePixelsToUnits: 100
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -100,89 +109,89 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Water_0
+      name: G-chef front work_0
       rect:
         serializedVersion: 2
-        x: 0
+        x: 15
         y: 0
-        width: 16
-        height: 16
+        width: 36
+        height: 63
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 733fa0d9a6484f350800000000000000
-      internalID: 6049605792901559095
+      spriteID: d2c955cc89d705760800000000000000
+      internalID: 7444588279260093485
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Water_1
+      name: G-chef front work_1
       rect:
         serializedVersion: 2
-        x: 16
+        x: 67
         y: 0
-        width: 16
-        height: 16
+        width: 48
+        height: 64
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: 525766925dcac09418c70f5328a41b31
-      internalID: 2127662691
+      spriteID: fae5ccbc53971f2b0800000000000000
+      internalID: -5552523593611714897
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Water_2
+      name: G-chef front work_2
       rect:
         serializedVersion: 2
-        x: 32
+        x: 143
         y: 0
-        width: 16
-        height: 16
+        width: 36
+        height: 63
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: 3ddca379ddec58445a5f9f2c7e35c8b1
-      internalID: -304997124
+      spriteID: c9c85d206c5028880800000000000000
+      internalID: -8610313189569753956
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Water_3
+      name: G-chef front work_3
       rect:
         serializedVersion: 2
-        x: 48
+        x: 207
         y: 0
-        width: 16
-        height: 16
+        width: 36
+        height: 64
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: f5f89841e7fa5794980ed06f21b96f22
-      internalID: -698745262
+      spriteID: e92f1a1953a16c3c0800000000000000
+      internalID: -4339752373545995618
       vertices: []
       indices: 
       edges: []
@@ -191,7 +200,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: ea5f744c95d0a4c4dabefc64ed86c4af
+    spriteID: 
     internalID: 0
     vertices: []
     indices: 
@@ -199,14 +208,12 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries:
-      - key: SpriteEditor.SliceSettings
-        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":16.0,"y":16.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
+      entries: []
     nameFileIdTable:
-      Water_0: 6049605792901559095
-      Water_1: 2127662691
-      Water_2: -304997124
-      Water_3: -698745262
+      G-chef front work_0: 7444588279260093485
+      G-chef front work_1: -5552523593611714897
+      G-chef front work_2: -8610313189569753956
+      G-chef front work_3: -4339752373545995618
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
