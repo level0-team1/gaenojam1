@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 7e9f37b5e1fb3064484eee3f100ea1a6
+guid: f49d4f2973210734b93413aca71d1c20
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 7947428505529812925
-    second: Free_Chicken_House_0
+      213: -2000726247262814106
+    second: basket_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -100,13 +100,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Free_Chicken_House_0
+      name: basket_0
       rect:
         serializedVersion: 2
-        x: 4
+        x: 8
         y: 0
-        width: 40
-        height: 48
+        width: 49
+        height: 26
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +115,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: db70be55e10fa4e60800000000000000
-      internalID: 7947428505529812925
+      spriteID: 6608913141efb34e0800000000000000
+      internalID: -2000726247262814106
       vertices: []
       indices: 
       edges: []
@@ -135,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Free_Chicken_House_0: 7947428505529812925
+      basket_0: -2000726247262814106
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
