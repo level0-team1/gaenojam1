@@ -14,4 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::IngredientSO
   itemName: gukganjang
   category: 2
-  icon: {fileID: 0}
+  icon: {fileID: 8548882304161029998, guid: 956a0c6c0fc40b4448795f2b3aaf543f, type: 3}

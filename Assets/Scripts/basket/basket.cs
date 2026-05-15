@@ -1,41 +1,33 @@
 using UnityEngine;
 
-public class BasketSpawner : MonoBehaviour
+public class Basket : MonoBehaviour
 {
-    public GameObject basketPrefab;
+    public IngredientSO containedIngredient; // ½ºÆù ½Ã ÇÒ´çµÉ Àç·á
+    private int touchCount = 0;
+    private bool isPickedUp = false;
 
-    public int basketCount = 30;
-
-    public Vector2 minBounds;
-    public Vector2 maxBounds;
-
-    public float checkRadius = 0.3f;
-
-    void Start()
+    // ÇÃ·¹ÀÌ¾î°¡ »óÈ£ÀÛ¿ëÇÒ ¶§ È£ÃâµÇ´Â ÇÔ¼ö
+    public void Interact(Inventory playerInventory)
     {
-        for (int i = 0; i < basketCount; i++)
+        if (isPickedUp) return;
+
+        touchCount++;
+
+        if (touchCount == 1)
         {
-            SpawnBasket();
+            // Ã¹ ¹øÂ° ÅÍÄ¡: ³»¿ë¹° È®ÀÎ (¹ÎÈñ´Ô ¾ÆÀÌÄÜ UI³ª µð¹ö±× ·Î±×)
+            Debug.Log($"¹Ù±¸´Ï È®ÀÎ: {containedIngredient.itemName}ÀÌ(°¡) µé¾îÀÖ½À´Ï´Ù!");
+            // TODO: ¹Ù±¸´Ï À§¿¡ ¾ÆÀÌÄÜÀ» ¶ç¿ì´Â ¿¬Ãâ Ãß°¡
         }
-    }
-
-    void SpawnBasket()
-    {
-        for (int i = 0; i < 20; i++)
+        else if (touchCount == 2)
         {
-            float x = Random.Range(minBounds.x, maxBounds.x);
-            float y = Random.Range(minBounds.y, maxBounds.y);
-
-            Vector2 pos = new Vector2(x, y);
-
-            if (!Physics2D.OverlapCircle(pos, checkRadius))
+            // µÎ ¹øÂ° ÅÍÄ¡: ÀÎº¥Åä¸® Ãß°¡ ½Ãµµ
+            if (playerInventory.AddCard(containedIngredient))
             {
-                Instantiate(basketPrefab, pos, Quaternion.identity);
-                Debug.Log("ìƒì„± ì„±ê³µ: " + pos);
-                return;
+                isPickedUp = true;
+                Debug.Log($"{containedIngredient.itemName} È¹µæ ¿Ï·á!");
+                Destroy(gameObject); // È¤Àº ºñÈ°¼ºÈ­
             }
         }
-
-        Debug.LogWarning("ìŠ¤í° ì‹¤íŒ¨ (ê³µê°„ ì—†ìŒ)");
     }
 }
