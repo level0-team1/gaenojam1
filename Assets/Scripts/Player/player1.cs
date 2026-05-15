@@ -8,53 +8,48 @@ public class Player1Move : MonoBehaviour
     private Vector2 moveInput;
     private Animation anim;
 
+
+
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
-        anim = GetComponent<Animation>();
+        anim = GetComponent<Animation>(); //anim은 애니메이션이라는 속성을 들고옴
     }
 
     void Update()
     {
-        moveInput = Vector2.zero;
+        moveInput.x = 0;
+        moveInput.y = 0;
 
-        // 위
         if (Input.GetKey(KeyCode.W))
         {
-            moveInput.y = 1;
             anim.Play("Player1_W_Up");
+            moveInput.y = 1;
+        }
+        else if (Input.GetKey(KeyCode.W))
+        {
+            anim.Play("New state 1");
         }
 
-        // 아래
-        else if (Input.GetKey(KeyCode.S))
+        if (Input.GetKey(KeyCode.S))
         {
             moveInput.y = -1;
-            anim.Play("Player1_W_Down");
         }
 
-        // 왼쪽
-        else if (Input.GetKey(KeyCode.A))
+        if (Input.GetKey(KeyCode.A))
         {
             moveInput.x = -1;
-            anim.Play("Player1_W_Left");
         }
 
-        // 오른쪽
-        else if (Input.GetKey(KeyCode.D))
+        if (Input.GetKey(KeyCode.D))
         {
             moveInput.x = 1;
-            anim.Play("Player1_W_Right");
-        }
-
-        // 안 움직일 때 Idle
-        else
-        {
-            anim.Play("Player1_Idle");
         }
     }
 
     void FixedUpdate()
     {
-        rb.linearVelocity = moveInput.normalized * speed;
+        rb.linearVelocity =
+            moveInput.normalized * speed;
     }
 }
