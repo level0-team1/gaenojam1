@@ -1,60 +1,80 @@
+ï»¿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class Inventory : MonoBehaviour
 {
-    // ÃÖ´ë ¼ÒÁö °¡´ÉÇÑ ½ÄÀç·á Ä«µå ¼ö 
-    private const int MAX_SLOTS = 6;
+    // ğŸ’¡ ìµœëŒ€ ìŠ¬ë¡¯ì„ ê¸°íšì„œì— ë§ê²Œ 5ì¹¸ìœ¼ë¡œ ìˆ˜ì •
+    private const int MAX_SLOTS = 5;
 
-    // ÇöÀç ÇÃ·¹ÀÌ¾î°¡ º¸À¯ÇÑ ½ÄÀç·á Ä«µå ¸®½ºÆ®
-    // (Dictionaryº¸´Ù List°¡ 6Ä­ UI ÀÎµ¦½º ¸ÅÄª¿¡ ´õ À¯¸®ÇÕ´Ï´Ù)
     [SerializeField] private List<IngredientSO> ownedCards = new List<IngredientSO>();
 
-    // ½ÄÀç·á Ä«µå Ãß°¡ (¹Ù±¸´Ï »óÈ£ÀÛ¿ë ½Ã È£Ãâ) [cite: 44, 45, 73]
+    [Header("êµì²´ ì‹œìŠ¤í…œ")]
+    public bool isReplacing = false; // í˜„ì¬ êµì²´ ì¤‘ì¸ì§€ ì—¬ë¶€
+    public IngredientSO pendingCard { get; private set; } // ë°”êµ¬ë‹ˆì—ì„œ ë§‰ êº¼ë‚¸ ìƒˆ ì¬ë£Œ
+
+    // UIì™€ ì†Œí†µí•˜ê¸° ìœ„í•œ ì´ë²¤íŠ¸ (ì‹¤ë¬´ì—ì„œ ìì£¼ ì“°ëŠ” ë°©ì‹)
+    public Action OnReplaceModeStarted;
+    public Action OnInventoryUpdated;
+
     public bool AddCard(IngredientSO newCard)
     {
-        // 1. ÀÎº¥Åä¸® Ç® Ã¼Å© 
+        // 1. ì´ë¯¸ êµì²´ ì¤‘ì´ë©´ ë‹¤ë¥¸ ë°”êµ¬ë‹ˆë¥¼ ë¨¹ì§€ ëª»í•˜ê²Œ ë§‰ìŒ
+        if (isReplacing) return false;
+
+        // 2. ì¸ë²¤í† ë¦¬ê°€ ê½‰ ì°¼ì„ ë•Œ -> êµì²´ ëª¨ë“œ ëŒì…
         if (ownedCards.Count >= MAX_SLOTS)
         {
-            Debug.Log($"{gameObject.name}: ÀÎº¥Åä¸®°¡ °¡µæ Ã¡½À´Ï´Ù! (6/6)");
-            return false; // Ãß°¡ ½ÇÆĞ
+            Debug.Log($"{gameObject.name}: ì¸ë²¤í† ë¦¬ ê°€ë“ ì°¸! êµì²´ ëª¨ë“œ ì§„ì….");
+            pendingCard = newCard;
+            isReplacing = true;
+
+            OnReplaceModeStarted?.Invoke(); // UIì— "êµì²´ì°½ ë„ì›Œ!"ë¼ê³  ì•Œë¦¼
+            StartCoroutine(ReplaceTimerCoroutine()); // ğŸ’¡ ê¸°íšì„œ ë£°: 2ì´ˆ íƒ€ì´ë¨¸ ì‹œì‘
+
+            return true; // ë°”êµ¬ë‹ˆëŠ” ë§µì—ì„œ ì—†ì–´ì ¸ì•¼ í•˜ë¯€ë¡œ true ë°˜í™˜
         }
 
-        // 2. Ä«µå Ãß°¡
+        // 3. ìë¦¬ê°€ ìˆì„ ë•Œ -> í‰ë²”í•˜ê²Œ ì¶”ê°€
         ownedCards.Add(newCard);
-        Debug.Log($"{gameObject.name}: {newCard.itemName} Ä«µå È¹µæ! (ÇöÀç: {ownedCards.Count}/{MAX_SLOTS})");
-
-        // UI °»½Å ·ÎÁ÷ÀÌ ÀÖ´Ù¸é ¿©±â¼­ È£Ãâ (ÆÀ¿ø ÅÂ½ºÅ©) [cite: 53, 70]
+        Debug.Log($"{gameObject.name}: {newCard.itemName} íšë“! (í˜„ì¬: {ownedCards.Count}/{MAX_SLOTS})");
+        OnInventoryUpdated?.Invoke();
         return true;
     }
 
-    // Ä«µå ¹ö¸®±â/±³Ã¼ ·ÎÁ÷ (ÇÊ¿ä ½Ã È£Ãâ)
-    public void RemoveCard(int index)
+    // í”Œë ˆì´ì–´ê°€ ë²„ë¦´ ì¹´ë“œë¥¼ ì„ íƒí•˜ê³  'E'ë¥¼ ëˆŒë €ì„ ë•Œ í˜¸ì¶œë¨
+    public void ConfirmReplace(int discardIndex)
     {
-        if (index >= 0 && index < ownedCards.Count)
+        if (isReplacing && pendingCard != null && discardIndex >= 0 && discardIndex < ownedCards.Count)
         {
-            Debug.Log($"{gameObject.name}: {ownedCards[index].itemName} Ä«µå¸¦ ¹ö·È½À´Ï´Ù.");
-            ownedCards.RemoveAt(index);
+            Debug.Log($"{ownedCards[discardIndex].itemName}ì„(ë¥¼) ë²„ë¦¬ê³  {pendingCard.itemName} íšë“!");
+            ownedCards[discardIndex] = pendingCard; // ì¹´ë“œ êµì²´
+            EndReplaceMode();
         }
     }
 
-    // Á¶¸® È­¸éÀ¸·Î ÇöÀç Ä«µå ¸ñ·ÏÀ» ³Ñ°ÜÁÖ±â À§ÇÑ ÇÔ¼ö [cite: 22, 39]
+    // 2ì´ˆ ì´ˆê³¼ ì‹œ ìë™ìœ¼ë¡œ ìƒˆ ì¬ë£Œë¥¼ ë²„ë¦¬ëŠ” ë¡œì§
+    private IEnumerator ReplaceTimerCoroutine()
+    {
+        yield return new WaitForSeconds(2.0f);
+
+        if (isReplacing)
+        {
+            Debug.Log("2ì´ˆ ê²½ê³¼! êµì²´í•˜ì§€ ì•Šê³  ìƒˆ ì¬ë£Œë¥¼ ë²„ë¦½ë‹ˆë‹¤.");
+            EndReplaceMode();
+        }
+    }
+
+    private void EndReplaceMode()
+    {
+        pendingCard = null;
+        isReplacing = false;
+        OnInventoryUpdated?.Invoke(); // UI ì›ë˜ëŒ€ë¡œ ë³µêµ¬
+    }
+
     public List<IngredientSO> GetOwnedCards()
     {
         return new List<IngredientSO>(ownedCards);
     }
-
-    // Æ¯Á¤ Àç·á¸¦ ¸î °³ °¡Áö°í ÀÖ´ÂÁö È®ÀÎ (UI ÈùÆ®³ª Ã¼Å©¿ë) [cite: 1, 49, 79]
-    public int GetIngredientCount(IngredientSO target)
-    {
-        int count = 0;
-        foreach (var card in ownedCards)
-        {
-            if (card == target) count++;
-        }
-        return count;
-    }
-
-    // ±âÁ¸ÀÇ CheckVictory´Â »èÁ¦µÇ¾ú½À´Ï´Ù. 
-    // ½Â¸® ÆÇÁ¤Àº 1ºĞ ÈÄ 'Á¶¸® È­¸é'¿¡¼­ ScoringSystemÀÌ ¼öÇàÇÕ´Ï´Ù. [cite: 13, 36]
 }

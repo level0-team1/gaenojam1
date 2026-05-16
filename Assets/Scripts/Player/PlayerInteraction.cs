@@ -2,27 +2,47 @@ using UnityEngine;
 
 public class PlayerInteraction : MonoBehaviour
 {
-    public KeyCode interactKey; // P1: F, P2: L 설정
-    private Inventory myInventory;
-    private Basket targetBasket; // 현재 범위 내 바구니
+    public KeyCode interactKey;
+    public float detectRadius = 0.8f; // 감지 범위
+    public LayerMask interactableLayer; // 'Basket' 레이어만 감지하도록 설정
 
-    void Start() => myInventory = GetComponent<Inventory>();
+    private Inventory inventory;
+    private Vector2 lastMoveDir; // 캐릭터가 마지막으로 바라본 방향
+
+    void Start() => inventory = GetComponent<Inventory>();
 
     void Update()
     {
-        if (targetBasket != null && Input.GetKeyDown(interactKey))
+        if (GamePhaseManager.Instance.currentPhase != GamePhase.Farming) return;
+
+        // 이동 입력에서 방향 추출 (한결님 코드에서 moveInput 가져오기)
+        float h = Input.GetAxisRaw(gameObject.name == "player1(cook)" ? "Horizontal" : "P2Horizontal");
+        float v = Input.GetAxisRaw(gameObject.name == "player1(cook)" ? "Vertical" : "P2Vertical");
+
+        if (h != 0 || v != 0) lastMoveDir = new Vector2(h, v).normalized;
+
+        if (Input.GetKeyDown(interactKey))
         {
-            targetBasket.Interact(myInventory);
+            CheckInteraction();
         }
     }
 
-    private void OnTriggerEnter2D(Collider2D other)
+    void CheckInteraction()
     {
-        if (other.CompareTag("Basket")) targetBasket = other.GetComponent<Basket>();
+        // 플레이어 위치에서 바라보는 방향으로 원형 캐스트 (OverlapCircle)
+        Collider2D hit = Physics2D.OverlapCircle((Vector2)transform.position + lastMoveDir * 0.5f, detectRadius, interactableLayer);
+
+        if (hit != null)
+        {
+            IInteractable target = hit.GetComponent<IInteractable>();
+            target?.OnInteract(inventory);
+        }
     }
 
-    private void OnTriggerExit2D(Collider2D other)
+    // 에디터에서 범위를 시각적으로 확인용
+    void OnDrawGizmosSelected()
     {
-        if (other.CompareTag("Basket")) targetBasket = null;
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere((Vector2)transform.position + lastMoveDir * 0.5f, detectRadius);
     }
 }

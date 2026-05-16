@@ -1,33 +1,59 @@
+using System.Collections;
 using UnityEngine;
 
-public class Basket : MonoBehaviour
+public class Basket : MonoBehaviour, IInteractable
 {
-    public IngredientSO containedIngredient; // 스폰 시 할당될 재료
-    private int touchCount = 0;
-    private bool isPickedUp = false;
+    public IngredientSO containedIngredient;
+    private Animator anim;
 
-    // 플레이어가 상호작용할 때 호출되는 함수
-    public void Interact(Inventory playerInventory)
+    private enum BasketState { Closed, Peeked, Empty }
+    private BasketState currentState = BasketState.Closed;
+    private bool isAnimating = false;
+
+    void Awake() => anim = GetComponent<Animator>();
+
+    public void OnInteract(Inventory playerInventory)
     {
-        if (isPickedUp) return;
+        if (isAnimating || currentState == BasketState.Empty) return;
 
-        touchCount++;
+        if (currentState == BasketState.Closed)
+            StartCoroutine(PeekSequence());
+        else if (currentState == BasketState.Peeked)
+            StartCoroutine(CollectSequence(playerInventory));
+    }
 
-        if (touchCount == 1)
+    IEnumerator PeekSequence()
+    {
+        isAnimating = true;
+        anim.SetTrigger("Open"); // 열기 애니메이션
+        Debug.Log($"[실무 로그] 바구니 내용물 확인: {containedIngredient.itemName}");
+
+        yield return new WaitForSeconds(0.8f); // 애니메이션 대기 (실무에선 Animation Event 추천)
+
+        anim.SetTrigger("Close"); // 다시 닫기
+        yield return new WaitForSeconds(0.5f);
+
+        currentState = BasketState.Peeked;
+        isAnimating = false;
+    }
+
+    IEnumerator CollectSequence(Inventory playerInventory)
+    {
+        isAnimating = true;
+        anim.SetTrigger("Open");
+
+        if (playerInventory.AddCard(containedIngredient))
         {
-            // 첫 번째 터치: 내용물 확인 (민희님 아이콘 UI나 디버그 로그)
-            Debug.Log($"바구니 확인: {containedIngredient.itemName}이(가) 들어있습니다!");
-            // TODO: 바구니 위에 아이콘을 띄우는 연출 추가
+            yield return new WaitForSeconds(0.3f);
+            currentState = BasketState.Empty;
+            Destroy(gameObject); // 혹은 비활성화 및 이펙트 재생
         }
-        else if (touchCount == 2)
+        else
         {
-            // 두 번째 터치: 인벤토리 추가 시도
-            if (playerInventory.AddCard(containedIngredient))
-            {
-                isPickedUp = true;
-                Debug.Log($"{containedIngredient.itemName} 획득 완료!");
-                Destroy(gameObject); // 혹은 비활성화
-            }
+            // 인벤토리 꽉 찼을 때 처리
+            anim.SetTrigger("Close");
+            yield return new WaitForSeconds(0.5f);
+            isAnimating = false;
         }
     }
 }

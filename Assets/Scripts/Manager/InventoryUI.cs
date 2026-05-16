@@ -1,29 +1,83 @@
-using System.Collections.Generic;
-using Unity.VisualScripting;
+ï»¿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class InventoryUI : MonoBehaviour
 {
     public Inventory targetInventory;
-    public KeyCode toggleKey;
-    public GameObject uiPanel;        // ÀÎº¥Åä¸® ÆË¾÷ Ã¢
+    public KeyCode toggleKey = KeyCode.Tab;
+    public KeyCode confirmKey = KeyCode.F; // ì¸ìŠ¤í™í„°ì—ì„œ F ë˜ëŠ” Lë¡œ ì„¤ì •
+    public GameObject uiPanel;
 
-    [Header("Ä«µå ½½·Ô ¼³Á¤")]
-    public List<Image> cardIcons;     // ½½·Ô ³»ÀÇ ½ÄÀç·á ¾ÆÀÌÄÜ Imageµé
-    public Color emptyColor = new Color(1, 1, 1, 0); // ºó Ä­Àº Åõ¸íÇÏ°Ô
+    [Header("ì¹´ë“œ ìŠ¬ë¡¯ ì„¤ì •")]
+    public List<Image> cardIcons; // ì‹ì¬ë£Œ ì´ë¯¸ì§€ ë¦¬ìŠ¤íŠ¸
 
     private bool isVisible = false;
+    private int selectedIndex = 0;
+
+    // ğŸ’¡ ì¶”ê°€ëœ ë³€ìˆ˜: ì°½ì´ ì—´ë¦° ì‹œê°„ì„ ê¸°ë¡
+    private float replaceOpenTime = 0f;
 
     void Start()
     {
         if (uiPanel != null) uiPanel.SetActive(false);
+
+        if (targetInventory != null)
+        {
+            targetInventory.OnReplaceModeStarted += StartReplaceMode;
+            targetInventory.OnInventoryUpdated += UpdateUI;
+        }
     }
 
     void Update()
     {
+        if (targetInventory != null && targetInventory.isReplacing)
+        {
+            HandleReplaceInput();
+            return;
+        }
+
         if (Input.GetKeyDown(toggleKey))
         {
+            ToggleInventory();
+        }
+    }
+
+    private void StartReplaceMode()
+    {
+        isVisible = true;
+        uiPanel.SetActive(true);
+        selectedIndex = 0;
+
+        // ğŸ’¡ ì°½ì´ ì—´ë¦° í˜„ì¬ ì‹œê°„ì„ ê¸°ë¡
+        replaceOpenTime = Time.time;
+
+        UpdateUI();
+    }
+
+    private void HandleReplaceInput()
+    {
+        // ğŸ’¡ í•µì‹¬ ë°©ì–´ ë¡œì§: ì°½ì´ ì—´ë¦¬ê³  0.2ì´ˆ ì•ˆì—ëŠ” ì…ë ¥(Fí‚¤)ì„ ë¬´ì‹œí•¨
+        if (Time.time - replaceOpenTime < 0.2f) return;
+
+        // ì¢Œìš° ë°©í–¥í‚¤ë¡œ ë²„ë¦´ ì¹´ë“œ ì„ íƒ
+        if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.A))
+        {
+            selectedIndex--;
+            if (selectedIndex < 0) selectedIndex = 4;
+            UpdateUI();
+        }
+        else if (Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.D))
+        {
+            selectedIndex++;
+            if (selectedIndex > 4) selectedIndex = 0;
+            UpdateUI();
+        }
+
+        // F ë˜ëŠ” Lí‚¤ë¥¼ ëˆŒëŸ¬ êµì²´ í™•ì •
+        if (Input.GetKeyDown(confirmKey))
+        {
+            targetInventory.ConfirmReplace(selectedIndex);
             ToggleInventory();
         }
     }
@@ -32,7 +86,6 @@ public class InventoryUI : MonoBehaviour
     {
         isVisible = !isVisible;
         uiPanel.SetActive(isVisible);
-
         if (isVisible) UpdateUI();
     }
 
@@ -42,19 +95,29 @@ public class InventoryUI : MonoBehaviour
 
         for (int i = 0; i < cardIcons.Count; i++)
         {
+            Image currentSlot = cardIcons[i];
+
             if (i < cards.Count)
             {
-                // 1. º¯¼ö ÀÌ¸§À» Icon(´ë¹®ÀÚ ÁÖÀÇ)À¸·Î ¼öÁ¤
-                cardIcons[i].sprite = cards[i].icon;
-                cardIcons[i].color = Color.white;
+                currentSlot.gameObject.SetActive(true);
+                currentSlot.sprite = cards[i].icon;
 
-                // 2. Ä«µå°¡ ÀÖÀ¸¸é ½½·Ô ¿ÀºêÁ§Æ®¸¦ È°¼ºÈ­
-                cardIcons[i].gameObject.SetActive(true);
+                if (targetInventory.isReplacing && i == selectedIndex)
+                {
+                    currentSlot.transform.localScale = Vector3.one * 1.15f;
+                    currentSlot.color = new Color(1f, 0.6f, 0.6f);
+                }
+                else
+                {
+                    currentSlot.transform.localScale = Vector3.one;
+                    currentSlot.color = Color.white;
+                }
             }
             else
             {
-                // 3. Ä«µå°¡ ¾øÀ¸¸é ½½·Ô ¿ÀºêÁ§Æ® ÀÚÃ¼¸¦ ¼û±è
-                cardIcons[i].gameObject.SetActive(false);
+                currentSlot.gameObject.SetActive(false);
+                currentSlot.transform.localScale = Vector3.one;
+                currentSlot.color = Color.white;
             }
         }
     }

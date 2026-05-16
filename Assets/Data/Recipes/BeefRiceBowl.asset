@@ -27,3 +27,4 @@ MonoBehaviour:
     amount: 1
   - ingredient: {fileID: 11400000, guid: 370efe29b3c0bd84882edd2aebde9d5d, type: 2}
     amount: 1
+  revealCount: 2

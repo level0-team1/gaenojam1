@@ -1,38 +1,50 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro; // Å¸ÀÌ¸Ó³ª ÅØ½ºÆ® Ã³¸®¸¦ À§ÇØ ÇÊ¿ä
+using TMPro;
 
 public enum GamePhase
 {
-    Start,          // È­¸é 1: ½ÃÀÛ È­¸é
-    Tutorial,       // È­¸é 2: ÁÖÀÇ»çÇ× ¹× ¹æ¹ı
-    MenuSelection,  // È­¸é 3: ·£´ı ¸Ş´º ¼±Á¤ (·ê·¿)
-    Farming,        // È­¸é 4: ½ÇÁ¦ °ÔÀÓ (ÆÄ¹Ö)
-    Cooking,        // È­¸é 6: Á¶¸® Áß (3, 2, 1)
-    Result          // È­¸é 7: °á°ú ¹ßÇ¥
+    Start,
+    Tutorial,
+    MenuSelection,
+    Farming,
+    Cooking,
+    Result
 }
 
 public class GamePhaseManager : MonoBehaviour
 {
     public static GamePhaseManager Instance { get; private set; }
 
-    [Header("ÇöÀç °ÔÀÓ ´Ü°è")]
+    [Header("í˜„ì¬ ê²Œì„ ë‹¨ê³„")]
     public GamePhase currentPhase;
 
-    [Header("UI ÆĞ³Îµé")]
-    public GameObject startPanel;        // È­¸é 1 [cite: 1]
-    public GameObject tutorialPanel;     // È­¸é 2 [cite: 12]
-    public GameObject selectionPanel;    // È­¸é 3 [cite: 19]
-    public GameObject farmingHUD;        // È­¸é 4 (ÀÎ°ÔÀÓ UI) [cite: 46]
-    public GameObject cookingPanel;      // È­¸é 6 [cite: 22]
-    public GameObject resultPanel;       // È­¸é 7 [cite: 36]
+    [Header("UI íŒ¨ë„ë“¤")]
+    public GameObject startPanel;
+    public GameObject tutorialPanel;
+    public GameObject selectionPanel;
+    public GameObject farmingHUD;
+    public GameObject cookingPanel;
+    public GameObject resultPanel;
 
-    [Header("ÆÄ¹Ö ¼³Á¤")]
-    public float farmingTime = 60f;      // 1ºĞ (±âÈ¹¾È 00:59 ±âÁØ) [cite: 3, 13]
+    [Header("íŒŒë° ì„¤ì •")]
+    public float farmingTime = 60f;
     private float timer;
-    public TMP_Text timerText;           // È­¸é »ó´Ü Å¸ÀÌ¸Ó ÅØ½ºÆ® [cite: 35, 68]
+    public TMP_Text timerText;
+
+    [Header("ê²°ê³¼ ì²˜ë¦¬ ê´€ë ¨")]
+    public ScoringSystem scoringSystem;
+    public Inventory player1Inventory;
+    public Inventory player2Inventory;
+    public TMP_Text resultScoreText;
+
+    // ğŸ’¡ ìƒˆë¡œ ì¶”ê°€ëœ ë©”ë‰´ ì„ ì • UI ë³€ìˆ˜ë“¤
+    [Header("ë©”ë‰´ ì„ ì • UI")]
+    public TMP_Text recipeNameText;
+    public List<Image> hintImages;
+    public Sprite unknownIcon;            // ğŸ’¡ ì¶”ê°€: ë¹„ê³µê°œ ì¬ë£Œì— ë„ìš¸ ë¬¼ìŒí‘œ ì´ë¯¸ì§€
 
     private void Awake()
     {
@@ -42,25 +54,21 @@ public class GamePhaseManager : MonoBehaviour
 
     private void Start()
     {
-        // Ã¹ ¹øÂ° ´Ü°èÀÎ Start·Î ½ÃÀÛ
         ChangePhase(GamePhase.Start);
     }
 
     private void Update()
     {
-        // ÆÄ¹Ö ÆäÀÌÁîÀÏ ¶§¸¸ Å¸ÀÌ¸Ó ÀÛµ¿
         if (currentPhase == GamePhase.Farming)
         {
             UpdateFarmingTimer();
         }
     }
 
-    // ´Ü°è ÀüÈ¯ ÇÙ½É ÇÔ¼ö
     public void ChangePhase(GamePhase newPhase)
     {
         currentPhase = newPhase;
 
-        // ¸ğµç ÆĞ³Î ÀÏ´Ü ²ô±â
         startPanel.SetActive(false);
         tutorialPanel.SetActive(false);
         selectionPanel.SetActive(false);
@@ -68,7 +76,6 @@ public class GamePhaseManager : MonoBehaviour
         cookingPanel.SetActive(false);
         resultPanel.SetActive(false);
 
-        // ÇØ´çµÇ´Â ÆĞ³Î¸¸ ÄÑ±â
         switch (currentPhase)
         {
             case GamePhase.Start:
@@ -79,15 +86,21 @@ public class GamePhaseManager : MonoBehaviour
                 break;
             case GamePhase.MenuSelection:
                 selectionPanel.SetActive(true);
-                // ¿©±â¼­ RecipeManager.Instance.SelectRandomRecipe() È£Ãâ °¡´É
+                // ğŸ’¡ ë©”ë‰´ ì„ ì • í™”ë©´ì´ ì¼œì§ˆ ë•Œ ë ˆì‹œí”¼ë¥¼ ë½‘ê³  UIë¥¼ ê°±ì‹ í•©ë‹ˆë‹¤.
+                RecipeManager.Instance.SelectRandomRecipe();
+                UpdateSelectionUI();
                 break;
             case GamePhase.Farming:
                 farmingHUD.SetActive(true);
-                timer = farmingTime; // Å¸ÀÌ¸Ó ÃÊ±âÈ­
+                timer = farmingTime;
+                if (RecipeManager.Instance.SelectedRecipe == null)
+                {
+                    RecipeManager.Instance.SelectRandomRecipe();
+                }
                 break;
             case GamePhase.Cooking:
                 cookingPanel.SetActive(true);
-                // ¿©±â¼­ Á¶¸® Ä«¿îÆ®´Ù¿î(3, 2, 1) ¿¬Ãâ ½ÃÀÛ 
+                StartCoroutine(CookingSequence());
                 break;
             case GamePhase.Result:
                 resultPanel.SetActive(true);
@@ -95,7 +108,49 @@ public class GamePhaseManager : MonoBehaviour
         }
     }
 
-    // ÆÄ¹Ö Å¸ÀÌ¸Ó ·ÎÁ÷
+    // ğŸ’¡ UI ê°±ì‹  ì „ìš© í•¨ìˆ˜ ì¶”ê°€
+    // ğŸ’¡ UI ê°±ì‹  ì „ìš© í•¨ìˆ˜ ì—…ë°ì´íŠ¸ (ë¬¼ìŒí‘œ ì²˜ë¦¬ ì¶”ê°€)
+    private void UpdateSelectionUI()
+    {
+        if (RecipeManager.Instance.SelectedRecipe == null) return;
+
+        // 1. ë ˆì‹œí”¼ ì´ë¦„ ë„ìš°ê¸°
+        if (recipeNameText != null)
+        {
+            recipeNameText.text = $"ì˜¤ëŠ˜ì˜ ë©”ë‰´:\n<color=yellow>{RecipeManager.Instance.SelectedRecipe.recipeName}</color>";
+        }
+
+        // 2. íŒíŠ¸ ë° ë¬¼ìŒí‘œ ì•„ì´ì½˜ ë„ìš°ê¸°
+        List<IngredientSO> hints = RecipeManager.Instance.revealedHints;
+        int totalIngredientsCount = RecipeManager.Instance.SelectedRecipe.requiredIngredients.Count; // ì´ í•„ìš”í•œ ì¬ë£Œ ê°œìˆ˜
+
+        for (int i = 0; i < hintImages.Count; i++)
+        {
+            // ì´ ì¬ë£Œ ê°œìˆ˜ ì•ˆìª½ì— ìˆëŠ” ìŠ¬ë¡¯ì€ ì¼ë‹¨ ì¼­ë‹ˆë‹¤.
+            if (i < totalIngredientsCount)
+            {
+                hintImages[i].gameObject.SetActive(true);
+                hintImages[i].color = Color.white;
+
+                if (i < hints.Count)
+                {
+                    // íŒíŠ¸ë¡œ ë½‘íŒ ê°œìˆ˜ë§Œí¼ì€ ì§„ì§œ ì•„ì´ì½˜ì„ ë³´ì—¬ì¤Œ
+                    hintImages[i].sprite = hints[i].icon;
+                }
+                else
+                {
+                    // ë‚˜ë¨¸ì§€ëŠ” ë¬¼ìŒí‘œ ì•„ì´ì½˜ìœ¼ë¡œ ë®ìŒ
+                    hintImages[i].sprite = unknownIcon;
+                }
+            }
+            // ë ˆì‹œí”¼ì˜ ì´ ì¬ë£Œ ê°œìˆ˜ë³´ë‹¤ ë‚¨ëŠ” UI ìŠ¬ë¡¯ì€ ì•„ì˜ˆ ìˆ¨ê¹ë‹ˆë‹¤.
+            else
+            {
+                hintImages[i].gameObject.SetActive(false);
+            }
+        }
+    }
+
     private void UpdateFarmingTimer()
     {
         if (timer > 0)
@@ -106,7 +161,6 @@ public class GamePhaseManager : MonoBehaviour
         else
         {
             timer = 0;
-            // ½Ã°£ÀÌ ´Ù µÇ¸é ÀÚµ¿À¸·Î Á¶¸® ´Ü°è·Î ÀüÈ¯ [cite: 13]
             ChangePhase(GamePhase.Cooking);
         }
     }
@@ -118,8 +172,43 @@ public class GamePhaseManager : MonoBehaviour
         timerText.text = string.Format("{0:00}:{1:00}", minutes, seconds);
     }
 
-    // °¢ ¹öÆ°¿¡¼­ È£ÃâÇÒ public ÇÔ¼öµé
     public void OnClickStart() => ChangePhase(GamePhase.Tutorial);
     public void OnClickPlay() => ChangePhase(GamePhase.MenuSelection);
     public void OnSelectionComplete() => ChangePhase(GamePhase.Farming);
+
+    private IEnumerator CookingSequence()
+    {
+        Debug.Log("ì¡°ë¦¬ë¥¼ ì‹œì‘í•©ë‹ˆë‹¤...");
+        yield return new WaitForSeconds(1.0f);
+        yield return new WaitForSeconds(1.0f);
+        yield return new WaitForSeconds(1.0f);
+
+        RecipeSO targetRecipe = RecipeManager.Instance.SelectedRecipe;
+        int p1Score = 0;
+        int p2Score = 0;
+
+        if (targetRecipe != null)
+        {
+            p1Score = scoringSystem.CalculateCookingScore(player1Inventory.GetOwnedCards(), targetRecipe);
+            p2Score = scoringSystem.CalculateCookingScore(player2Inventory.GetOwnedCards(), targetRecipe);
+        }
+
+        string resultMessage = targetRecipe != null ? $"ì˜¤ëŠ˜ì˜ ìš”ë¦¬: {targetRecipe.recipeName}\n\n" : "ì˜¤ëŠ˜ì˜ ìš”ë¦¬: ì•Œ ìˆ˜ ì—†ìŒ\n\n";
+        resultMessage += $"P1 ì ìˆ˜: {p1Score}ì \n";
+        resultMessage += $"P2 ì ìˆ˜: {p2Score}ì \n\n";
+
+        if (p1Score > p2Score)
+            resultMessage += "<color=blue>í”Œë ˆì´ì–´ 1 ìŠ¹ë¦¬!</color>";
+        else if (p2Score > p1Score)
+            resultMessage += "<color=red>í”Œë ˆì´ì–´ 2 ìŠ¹ë¦¬!</color>";
+        else
+            resultMessage += "ë¬´ìŠ¹ë¶€!";
+
+        if (resultScoreText != null)
+        {
+            resultScoreText.text = resultMessage;
+        }
+
+        ChangePhase(GamePhase.Result);
+    }
 }
