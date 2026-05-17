@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fdd798e50451ae64eb9d568e438d8f94, type: 3}
   m_Name: Beef
   m_EditorClassIdentifier: Assembly-CSharp::IngredientSO
-  itemName: beef
+  itemName: "\uC18C\uACE0\uAE30"
   category: 0
-  icon: {fileID: 8548882304161029998, guid: 956a0c6c0fc40b4448795f2b3aaf543f, type: 3}
+  icon: {fileID: 5600642757700430993, guid: f84d00265e89ca340b56db3ffada203d, type: 3}

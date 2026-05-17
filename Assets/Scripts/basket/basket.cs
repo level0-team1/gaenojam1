@@ -10,6 +10,9 @@ public class Basket : MonoBehaviour, IInteractable
     private BasketState currentState = BasketState.Closed;
     private bool isAnimating = false;
 
+    [Header("Å¸°Ù Ç¥½Ã UI")]
+    public GameObject targetIndicator;
+
     void Awake() => anim = GetComponent<Animator>();
 
     public void OnInteract(Inventory playerInventory)
@@ -20,6 +23,13 @@ public class Basket : MonoBehaviour, IInteractable
             StartCoroutine(PeekSequence());
         else if (currentState == BasketState.Peeked)
             StartCoroutine(CollectSequence(playerInventory));
+    }
+    public void SetHighlight(bool isActive)
+    {
+        if (targetIndicator != null)
+        {
+            targetIndicator.SetActive(isActive);
+        }
     }
 
     IEnumerator PeekSequence()

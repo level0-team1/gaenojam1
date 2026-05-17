@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fdd798e50451ae64eb9d568e438d8f94, type: 3}
   m_Name: Rice
   m_EditorClassIdentifier: Assembly-CSharp::IngredientSO
-  itemName: rice
+  itemName: "\uBC25"
   category: 3
-  icon: {fileID: 8548882304161029998, guid: 956a0c6c0fc40b4448795f2b3aaf543f, type: 3}
+  icon: {fileID: 6232134236544131685, guid: 891734a1972298140812935283b1caca, type: 3}

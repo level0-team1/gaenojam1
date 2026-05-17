@@ -40,11 +40,22 @@ public class GamePhaseManager : MonoBehaviour
     public Inventory player2Inventory;
     public TMP_Text resultScoreText;
 
-    // 💡 새로 추가된 메뉴 선정 UI 변수들
-    [Header("메뉴 선정 UI")]
+    [Header("메뉴 선정 UI (큰 화면)")]
     public TMP_Text recipeNameText;
+    public Image recipeFoodImage;
     public List<Image> hintImages;
-    public Sprite unknownIcon;            // 💡 추가: 비공개 재료에 띄울 물음표 이미지
+    public Sprite unknownIcon;
+
+    // 💡 NEW: 인게임 양쪽 상단 UI를 위한 변수들 추가
+    [Header("파밍 HUD - Player 1 (좌측 상단)")]
+    public TMP_Text p1FarmingRecipeName;
+    public Image p1FarmingFoodImage;
+    public List<Image> p1FarmingHintImages;
+
+    [Header("파밍 HUD - Player 2 (우측 상단)")]
+    public TMP_Text p2FarmingRecipeName;
+    public Image p2FarmingFoodImage;
+    public List<Image> p2FarmingHintImages;
 
     private void Awake()
     {
@@ -86,9 +97,8 @@ public class GamePhaseManager : MonoBehaviour
                 break;
             case GamePhase.MenuSelection:
                 selectionPanel.SetActive(true);
-                // 💡 메뉴 선정 화면이 켜질 때 레시피를 뽑고 UI를 갱신합니다.
                 RecipeManager.Instance.SelectRandomRecipe();
-                UpdateSelectionUI();
+                UpdateSelectionUI(); // 💡 여기서 큰 화면과 양쪽 HUD를 동시에 세팅합니다.
                 break;
             case GamePhase.Farming:
                 farmingHUD.SetActive(true);
@@ -108,45 +118,90 @@ public class GamePhaseManager : MonoBehaviour
         }
     }
 
-    // 💡 UI 갱신 전용 함수 추가
-    // 💡 UI 갱신 전용 함수 업데이트 (물음표 처리 추가)
     private void UpdateSelectionUI()
     {
         if (RecipeManager.Instance.SelectedRecipe == null) return;
 
-        // 1. 레시피 이름 띄우기
-        if (recipeNameText != null)
-        {
-            recipeNameText.text = $"오늘의 메뉴:\n<color=yellow>{RecipeManager.Instance.SelectedRecipe.recipeName}</color>";
-        }
-
-        // 2. 힌트 및 물음표 아이콘 띄우기
+        RecipeSO currentRecipe = RecipeManager.Instance.SelectedRecipe;
         List<IngredientSO> hints = RecipeManager.Instance.revealedHints;
-        int totalIngredientsCount = RecipeManager.Instance.SelectedRecipe.requiredIngredients.Count; // 총 필요한 재료 개수
+        int totalIngredientsCount = currentRecipe.requiredIngredients.Count;
+
+        // ==========================================
+        // 1. 기존 큰 주문서 (SelectionPanel) 업데이트
+        // ==========================================
+        if (recipeNameText != null) recipeNameText.text = $"{currentRecipe.recipeName}";
+
+        if (recipeFoodImage != null)
+        {
+            if (currentRecipe.resultImage != null)
+            {
+                recipeFoodImage.sprite = currentRecipe.resultImage;
+                recipeFoodImage.gameObject.SetActive(true);
+            }
+            else recipeFoodImage.gameObject.SetActive(false);
+        }
 
         for (int i = 0; i < hintImages.Count; i++)
         {
-            // 총 재료 개수 안쪽에 있는 슬롯은 일단 켭니다.
+            if (hintImages[i] == null) continue;
             if (i < totalIngredientsCount)
             {
                 hintImages[i].gameObject.SetActive(true);
                 hintImages[i].color = Color.white;
-
-                if (i < hints.Count)
-                {
-                    // 힌트로 뽑힌 개수만큼은 진짜 아이콘을 보여줌
-                    hintImages[i].sprite = hints[i].icon;
-                }
-                else
-                {
-                    // 나머지는 물음표 아이콘으로 덮음
-                    hintImages[i].sprite = unknownIcon;
-                }
+                hintImages[i].sprite = (i < hints.Count) ? hints[i].icon : unknownIcon;
             }
-            // 레시피의 총 재료 개수보다 남는 UI 슬롯은 아예 숨깁니다.
-            else
+            else hintImages[i].gameObject.SetActive(false);
+        }
+
+        // ==========================================
+        // 💡 2. 파밍 HUD 양쪽 (P1, P2) 동시 업데이트
+        // ==========================================
+
+        // 텍스트 이름 동기화
+        if (p1FarmingRecipeName != null) p1FarmingRecipeName.text = $"{currentRecipe.recipeName}";
+        if (p2FarmingRecipeName != null) p2FarmingRecipeName.text = $"{currentRecipe.recipeName}";
+
+        // 메인 음식 이미지 동기화
+        if (p1FarmingFoodImage != null && currentRecipe.resultImage != null)
+        {
+            p1FarmingFoodImage.sprite = currentRecipe.resultImage;
+            p1FarmingFoodImage.gameObject.SetActive(true);
+        }
+        if (p2FarmingFoodImage != null && currentRecipe.resultImage != null)
+        {
+            p2FarmingFoodImage.sprite = currentRecipe.resultImage;
+            p2FarmingFoodImage.gameObject.SetActive(true);
+        }
+
+        // 힌트 이미지들 동기화 (P1)
+        if (p1FarmingHintImages != null)
+        {
+            for (int i = 0; i < p1FarmingHintImages.Count; i++)
             {
-                hintImages[i].gameObject.SetActive(false);
+                if (p1FarmingHintImages[i] == null) continue;
+                if (i < totalIngredientsCount)
+                {
+                    p1FarmingHintImages[i].gameObject.SetActive(true);
+                    p1FarmingHintImages[i].color = Color.white;
+                    p1FarmingHintImages[i].sprite = (i < hints.Count) ? hints[i].icon : unknownIcon;
+                }
+                else p1FarmingHintImages[i].gameObject.SetActive(false);
+            }
+        }
+
+        // 힌트 이미지들 동기화 (P2)
+        if (p2FarmingHintImages != null)
+        {
+            for (int i = 0; i < p2FarmingHintImages.Count; i++)
+            {
+                if (p2FarmingHintImages[i] == null) continue;
+                if (i < totalIngredientsCount)
+                {
+                    p2FarmingHintImages[i].gameObject.SetActive(true);
+                    p2FarmingHintImages[i].color = Color.white;
+                    p2FarmingHintImages[i].sprite = (i < hints.Count) ? hints[i].icon : unknownIcon;
+                }
+                else p2FarmingHintImages[i].gameObject.SetActive(false);
             }
         }
     }
@@ -206,6 +261,7 @@ public class GamePhaseManager : MonoBehaviour
 
         if (resultScoreText != null)
         {
+            resultMessage = resultMessage.Replace("\n", " ");
             resultScoreText.text = resultMessage;
         }
 

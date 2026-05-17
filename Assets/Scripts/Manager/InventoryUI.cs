@@ -1,21 +1,28 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class InventoryUI : MonoBehaviour
 {
     public Inventory targetInventory;
     public KeyCode toggleKey = KeyCode.Tab;
-    public KeyCode confirmKey = KeyCode.F; // 인스펙터에서 F 또는 L로 설정
+    public KeyCode confirmKey = KeyCode.F;
     public GameObject uiPanel;
 
     [Header("카드 슬롯 설정")]
-    public List<Image> cardIcons; // 식재료 이미지 리스트
+    public List<Image> cardIcons;
+    public List<TMP_Text> cardTexts;
+    // 💡 NEW: 프리팹 자식에 새로 만든 'SelectionBorder' 이미지들을 여기에 연결합니다.
+    public List<Image> cardHighlights;
+
+    [Header("교체용 추가 UI (주운 재료)")]
+    public GameObject pendingCardUI;
+    public Image pendingIcon;
+    public TMP_Text pendingText;
 
     private bool isVisible = false;
     private int selectedIndex = 0;
-
-    // 💡 추가된 변수: 창이 열린 시간을 기록
     private float replaceOpenTime = 0f;
 
     void Start()
@@ -31,62 +38,91 @@ public class InventoryUI : MonoBehaviour
 
     void Update()
     {
-        if (targetInventory != null && targetInventory.isReplacing)
+        if (isVisible)
         {
-            HandleReplaceInput();
+            HandleUIInput();
+
+            if (Input.GetKeyDown(toggleKey) && !targetInventory.isReplacing)
+            {
+                CloseInventory();
+            }
             return;
         }
 
-        if (Input.GetKeyDown(toggleKey))
+        if (Input.GetKeyDown(toggleKey) && !targetInventory.isReplacing)
         {
-            ToggleInventory();
+            OpenInventory();
         }
     }
 
     private void StartReplaceMode()
     {
+        replaceOpenTime = Time.time;
+        OpenInventory();
+    }
+
+    public void OpenInventory()
+    {
         isVisible = true;
         uiPanel.SetActive(true);
         selectedIndex = 0;
-
-        // 💡 창이 열린 현재 시간을 기록
-        replaceOpenTime = Time.time;
-
+        if (targetInventory != null) targetInventory.isUIOpen = true;
         UpdateUI();
     }
 
-    private void HandleReplaceInput()
+    public void CloseInventory()
     {
-        // 💡 핵심 방어 로직: 창이 열리고 0.2초 안에는 입력(F키)을 무시함
-        if (Time.time - replaceOpenTime < 0.2f) return;
+        isVisible = false;
+        uiPanel.SetActive(false);
+        if (targetInventory != null) targetInventory.isUIOpen = false;
+    }
 
-        // 좌우 방향키로 버릴 카드 선택
+    private void HandleUIInput()
+    {
+        if (targetInventory.isReplacing && Time.time - replaceOpenTime < 0.2f) return;
+
+        int cardCount = targetInventory.GetOwnedCards().Count;
+        if (cardCount == 0) return;
+
+        int maxSelectionCount = targetInventory.isReplacing ? cardCount + 1 : cardCount;
+
         if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.A))
         {
             selectedIndex--;
-            if (selectedIndex < 0) selectedIndex = 4;
+            if (selectedIndex < 0) selectedIndex = maxSelectionCount - 1;
             UpdateUI();
         }
         else if (Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.D))
         {
             selectedIndex++;
-            if (selectedIndex > 4) selectedIndex = 0;
+            if (selectedIndex >= maxSelectionCount) selectedIndex = 0;
             UpdateUI();
         }
 
-        // F 또는 L키를 눌러 교체 확정
         if (Input.GetKeyDown(confirmKey))
         {
-            targetInventory.ConfirmReplace(selectedIndex);
-            ToggleInventory();
-        }
-    }
+            if (targetInventory.isReplacing)
+            {
+                if (selectedIndex == cardCount)
+                {
+                    targetInventory.CancelReplace();
+                }
+                else
+                {
+                    targetInventory.ConfirmReplace(selectedIndex);
+                }
+                CloseInventory();
+            }
+            else
+            {
+                targetInventory.RemoveCard(selectedIndex);
 
-    public void ToggleInventory()
-    {
-        isVisible = !isVisible;
-        uiPanel.SetActive(isVisible);
-        if (isVisible) UpdateUI();
+                if (selectedIndex >= targetInventory.GetOwnedCards().Count)
+                    selectedIndex = Mathf.Max(0, targetInventory.GetOwnedCards().Count - 1);
+
+                UpdateUI();
+            }
+        }
     }
 
     public void UpdateUI()
@@ -95,30 +131,111 @@ public class InventoryUI : MonoBehaviour
 
         for (int i = 0; i < cardIcons.Count; i++)
         {
-            Image currentSlot = cardIcons[i];
+            Image iconImg = cardIcons[i];
+            if (iconImg == null) continue;
+
+            Image frameImg = (iconImg.transform.parent != null) ? iconImg.transform.parent.GetComponent<Image>() : null;
+            if (frameImg == null) frameImg = iconImg;
+
+            // 💡 NEW: 이번 루프에 해당하는 하이라이트용 테두리 이미지를 가져옵니다.
+            Image highlightImg = (i < cardHighlights.Count) ? cardHighlights[i] : null;
 
             if (i < cards.Count)
             {
-                currentSlot.gameObject.SetActive(true);
-                currentSlot.sprite = cards[i].icon;
+                frameImg.gameObject.SetActive(true);
+                iconImg.gameObject.SetActive(true);
+                iconImg.sprite = cards[i].icon;
 
-                if (targetInventory.isReplacing && i == selectedIndex)
+                if (i < cardTexts.Count && cardTexts[i] != null)
                 {
-                    currentSlot.transform.localScale = Vector3.one * 1.15f;
-                    currentSlot.color = new Color(1f, 0.6f, 0.6f);
+                    cardTexts[i].text = cards[i].itemName;
+                    cardTexts[i].gameObject.SetActive(true);
+                }
+
+                // 기존 카드 5장 중 하나가 선택되었을 때 효과
+                if (isVisible && i == selectedIndex)
+                {
+                    frameImg.transform.localScale = Vector3.one * 1.15f;
+
+                    // 💡 NEW 로직: 배경색(frameImg.color)은 건드리지 않습니다! 흰색 유지.
+                    frameImg.color = Color.white;
+
+                    // 💡 NEW 로직: 대신 별도로 분리한 테두리 이미지(highlightImg)를 켜고 색을 줍니다.
+                    if (highlightImg != null)
+                    {
+                        highlightImg.gameObject.SetActive(true);
+                        highlightImg.color = targetInventory.isReplacing ? new Color(1f, 0.6f, 0.6f) : new Color(0.6f, 0.8f, 1f);
+                    }
                 }
                 else
                 {
-                    currentSlot.transform.localScale = Vector3.one;
-                    currentSlot.color = Color.white;
+                    frameImg.transform.localScale = Vector3.one;
+                    frameImg.color = Color.white;
+
+                    // 💡 NEW 로직: 선택 안 됐을 때는 하이라이트 테두리를 끕니다.
+                    if (highlightImg != null) highlightImg.gameObject.SetActive(false);
                 }
             }
             else
             {
-                currentSlot.gameObject.SetActive(false);
-                currentSlot.transform.localScale = Vector3.one;
-                currentSlot.color = Color.white;
+                frameImg.gameObject.SetActive(false);
+                iconImg.gameObject.SetActive(false);
+
+                if (i < cardTexts.Count && cardTexts[i] != null)
+                {
+                    cardTexts[i].gameObject.SetActive(false);
+                }
+
+                frameImg.transform.localScale = Vector3.one;
+                frameImg.color = Color.white;
+
+                // 💡 NEW 로직: 빈 칸일 때도 하이라이트 끔
+                if (highlightImg != null) highlightImg.gameObject.SetActive(false);
             }
+        }
+
+        if (targetInventory.isReplacing && targetInventory.pendingCard != null)
+        {
+            if (pendingCardUI != null) pendingCardUI.SetActive(true);
+
+            if (pendingIcon != null) pendingIcon.sprite = targetInventory.pendingCard.icon;
+            if (pendingText != null) pendingText.text = targetInventory.pendingCard.itemName;
+
+            // 새로 주운 카드(6번째 카드)가 선택되었을 때 시각 효과 주기
+            Image pendingFrameImg = pendingCardUI.GetComponent<Image>();
+
+            // 💡 NEW: PendingCard 프리팹 안에도 'SelectionBorder' 자식이 있어야 합니다!
+            // PendingUI 자식 중에서 "SelectionBorder"라는 이름을 가진 Image 컴포넌트를 찾아옵니다.
+            Transform pendingHighlightTransform = pendingCardUI.transform.Find("SelectionBorder");
+            Image pendingHighlightImg = (pendingHighlightTransform != null) ? pendingHighlightTransform.GetComponent<Image>() : null;
+
+            if (pendingFrameImg != null)
+            {
+                if (isVisible && selectedIndex == cards.Count) // 선택 인덱스가 5(마지막)일 때
+                {
+                    pendingFrameImg.transform.localScale = Vector3.one * 1.15f;
+                    pendingFrameImg.color = Color.white; // 배경은 흰색 유지
+
+                    // 💡 NEW: 주운 카드 전용 하이라이트 테두리를 켜고 색을 줍니다 (무조건 빨강)
+                    if (pendingHighlightImg != null)
+                    {
+                        pendingHighlightImg.gameObject.SetActive(true);
+                        pendingHighlightImg.color = new Color(1f, 0.6f, 0.6f);
+                    }
+                }
+                else
+                {
+                    pendingFrameImg.transform.localScale = Vector3.one;
+                    pendingFrameImg.color = Color.white;
+
+                    // 💡 NEW: 선택 안 됐을 때는 주운 카드 하이라이트 끔
+                    if (pendingHighlightImg != null) pendingHighlightImg.gameObject.SetActive(false);
+                }
+            }
+        }
+        else
+        {
+            if (pendingCardUI != null) pendingCardUI.SetActive(false);
         }
     }
 }

@@ -7,17 +7,19 @@ public class Player2Move : MonoBehaviour
     private Rigidbody2D rb;
     private Animator anim; // 💡 애니메이터 변수 추가
     private Vector2 moveInput;
+    private Inventory inv;
 
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
         anim = GetComponent<Animator>(); // 💡 컴포넌트 가져오기
+        inv = GetComponent<Inventory>();
     }
 
     void Update()
     {
         // 파밍 페이즈가 아닐 때는 입력을 막고 애니메이션도 강제로 Idle로 만듦
-        if (GamePhaseManager.Instance.currentPhase != GamePhase.Farming)
+        if (GamePhaseManager.Instance.currentPhase != GamePhase.Farming || inv.isUIOpen)
         {
             moveInput = Vector2.zero;
             anim.SetFloat("Speed", 0);
