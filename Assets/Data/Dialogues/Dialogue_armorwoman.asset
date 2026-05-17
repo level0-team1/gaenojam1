@@ -1,0 +1,74 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 21f9c4a9d48473043aa7a111d4aa8dc6, type: 3}
+  m_Name: Dialogue_armorwoman
+  m_EditorClassIdentifier: Assembly-CSharp::DialogueData
+  lines:
+  - characterName: "\uC190\uB2D8"
+    text: "\uD06C\uD06C\uD06C... \uD53C\uC640 \uC804\uC7A5\uC758 \uB0C4\uC0C8\uB97C
+      \uB530\uB77C\uC654\uAC70\uB298, \uC5EC\uAE30\uAC00 \uADF8 \uC804\uC124\uC801\uC778
+      \uC804\uC7A5\uC758 \uB300\uD53C\uC18C... \uC74C\uC2DD\uC810\uC778\uAC00!"
+    characterSprite: {fileID: 797787763149467483, guid: f8e25be31cdd76c49b5106c9da9dbf89, type: 3}
+    characterSprite2: {fileID: 0}
+  - characterName: "\uD50C\uB808\uC774\uC5B4 1"
+    text: "\uC5B4\uC11C\uC624\uC138\uC694! \uCD5C\uACE0\uC758 \uC74C\uC2DD\uC810!"
+    characterSprite: {fileID: -1803160342904494810, guid: 6e0fa5eadf8c8064795c69b97e7405e0, type: 3}
+    characterSprite2: {fileID: 0}
+  - characterName: "\uD50C\uB808\uC774\uC5B4 2"
+    text: "\"\uD55C\uC138\uC720\uD76C\uC9C4\"\uC5D0 \uC5B4\uC11C\uC624\uC138\uC694."
+    characterSprite: {fileID: -7918698140010856851, guid: 866642838f9ade648a84182d13de5440, type: 3}
+    characterSprite2: {fileID: 0}
+  - characterName: "\uC190\uB2D8"
+    text: "\uBC18\uAC11\uB2E4, \uC8FC\uBC29\uC758 \uC804\uC0AC\uB4E4\uC774\uC5EC!
+      \uB0B4 \uC774 \uADFC\uCC98 \uD669\uC57C\uC5D0\uC11C \uBC31\uBC1C\uC758 \uC544\uC8FC
+      \uAC15\uB825\uD55C \uD328\uAE30\uB97C \uBFDC\uC5B4\uB0B4\uB294 \uBCA0\uD14C\uB791
+      \uC170\uD504\uB97C \uB9CC\uB0AC\uB2E4. \uADF8 \uC790\uAC00 \uB0B4 \uAC80\uBD89\uC740
+      \uBBF8\uAC01\uC758 \uC804\uD22C\uB825\uC744 \uCDA9\uC871\uC2DC\uCF1C \uC904
+      \uC804\uB825\uC758 \uC80A\uC740 \uC694\uB9AC\uC0AC 2\uBA85\uC774 \uC774 \uC694\uC0C8\uC5D0
+      \uC0C1\uC8FC\uD558\uACE0 \uC788\uB2E4\uACE0 \uD558\uB354\uAD70!"
+    characterSprite: {fileID: 797787763149467483, guid: f8e25be31cdd76c49b5106c9da9dbf89, type: 3}
+    characterSprite2: {fileID: 0}
+  - characterName: "\uD50C\uB808\uC774\uC5B4 1"
+    text: "\uBB3C\uB860\uC774\uC8E0! \uBA39\uACE0 \uC2F6\uC740\uAC78 \uB9D0\uB9CC
+      \uD558\uC138\uC694!"
+    characterSprite: {fileID: -1803160342904494810, guid: 6e0fa5eadf8c8064795c69b97e7405e0, type: 3}
+    characterSprite2: {fileID: 0}
+  - characterName: "\uD50C\uB808\uC774\uC5B4 2"
+    text: "\uB531 \uBCF4\uB2C8 \uC2A4\uC2B9\uB2D8\uC774\uAD6C\uB9CC.."
+    characterSprite: {fileID: -7918698140010856851, guid: 866642838f9ade648a84182d13de5440, type: 3}
+    characterSprite2: {fileID: 0}
+  - characterName: "\uD50C\uB808\uC774\uC5B4 1"
+    text: "\uCD5C\uACE0\uB85C \uC2E0\uC120\uD55C \uC2DD\uC790\uC7AC \uD2B8\uB7ED\uB9CC
+      \uC624\uBA74 \uBC14\uB85C \uC694\uB9AC\uD574\uB4DC\uB9B4\uAC8C\uC694!"
+    characterSprite: {fileID: -1803160342904494810, guid: 6e0fa5eadf8c8064795c69b97e7405e0, type: 3}
+    characterSprite2: {fileID: 0}
+  - characterName: "\uC190\uB2D8"
+    text: "\uD06C\uC73D... \uBCF4\uAE09 \uC218\uC1A1 \uB9C8\uCC28(\uD2B8\uB7ED)\uB77C\uACE0?
+      \uD639\uC2DC \uADF8 \uAE43\uBC1C\uC758 \uC774\uB984\uC774... '\uC2E0\uC120\uBB3C\uC0B0'\uC774\uC5C8\uB098?"
+    characterSprite: {fileID: 797787763149467483, guid: f8e25be31cdd76c49b5106c9da9dbf89, type: 3}
+    characterSprite2: {fileID: 0}
+  - characterName: "\uD50C\uB808\uC774\uC5B4 1"
+    text: "\uB124!"
+    characterSprite: {fileID: -1803160342904494810, guid: 6e0fa5eadf8c8064795c69b97e7405e0, type: 3}
+    characterSprite2: {fileID: 0}
+  - characterName: "\uC190\uB2D8"
+    text: "\uC5B4\uB460\uC758 \uC800\uC8FC\uC778\uAC00... \uADF8 \uD2B8\uB7ED, \uB0B4\uAC00
+      \uC774 \uC131\uCC44\uB85C \uC9C4\uACA9\uD558\uB358 \uB3C4\uC911 \uB9C8\uC655\uC758
+      \uD568\uC815\uC5D0 \uBE60\uC9C4 \uAC83\uCC98\uB7FC \uB3C4\uB85C \uC704\uC5D0\uC11C
+      \uC2DC\uC6D0\uD558\uAC8C \uC5CE\uC5B4\uC838 \uADA4\uBA78\uD55C \uAC83\uC744
+      \uBAA9\uACA9\uD588\uB2E4!"
+    characterSprite: {fileID: 797787763149467483, guid: f8e25be31cdd76c49b5106c9da9dbf89, type: 3}
+    characterSprite2: {fileID: 0}
+  - characterName: "\uD50C\uB808\uC774\uC5B4 1 & \uD50C\uB808\uC774\uC5B4 2"
+    text: "\uC608?????????????????"
+    characterSprite: {fileID: -1803160342904494810, guid: 6e0fa5eadf8c8064795c69b97e7405e0, type: 3}
+    characterSprite2: {fileID: -7918698140010856851, guid: 866642838f9ade648a84182d13de5440, type: 3}

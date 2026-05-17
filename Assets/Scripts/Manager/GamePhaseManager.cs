@@ -32,6 +32,13 @@ public class GamePhaseManager : MonoBehaviour
     [Header("파밍 설정")]
     public float farmingTime = 60f;
     private float timer;
+    private int lastP1Score;
+    private int lastP2Score;
+    private RecipeSO lastRecipe;
+    private string lastScoreLine;
+    private List<IngredientSO> lastP1Cards;
+    private List<IngredientSO> lastP2Cards;
+    private bool _advanceDialogue;
     public TMP_Text timerText;
 
     [Header("결과 처리 관련")]
@@ -39,6 +46,26 @@ public class GamePhaseManager : MonoBehaviour
     public Inventory player1Inventory;
     public Inventory player2Inventory;
     public TMP_Text resultScoreText;
+
+    [Header("쿠킹/결과 패널 VN UI")]
+    public Image cookingCharImage;
+    public Image resultCharImage;
+    public TMP_Text resultNameText;
+    public Image cookingFillImage;
+    public TMP_Text cookingStatusText;
+    public float cookingBarDuration = 3f;
+    public GameObject resultNextIndicator;
+    public GameObject resultRestartButtonGO;
+
+    [Header("손님 설정")]
+    public List<GuestSO> guestList;
+    public GuestSO SelectedGuest { get; private set; }
+
+    [Header("카메라")]
+    public CameraFollow player1Cam;
+    public CameraFollow player2Cam;
+    public Transform startCameraAnchor;
+    public Camera startCamera;
 
     [Header("메뉴 선정 UI (큰 화면)")]
     public TMP_Text recipeNameText;
@@ -71,9 +98,9 @@ public class GamePhaseManager : MonoBehaviour
     private void Update()
     {
         if (currentPhase == GamePhase.Farming)
-        {
             UpdateFarmingTimer();
-        }
+        if (Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return))
+            _advanceDialogue = true;
     }
 
     public void ChangePhase(GamePhase newPhase)
@@ -91,17 +118,24 @@ public class GamePhaseManager : MonoBehaviour
         {
             case GamePhase.Start:
                 startPanel.SetActive(true);
+                SetStartCamera();
                 break;
             case GamePhase.Tutorial:
                 tutorialPanel.SetActive(true);
+                SetStartCamera();
+                if (guestList != null && guestList.Count > 0)
+                    SelectedGuest = guestList[Random.Range(0, guestList.Count)];
+                DialogueManager.Instance.StartDialogueWithGuest(SelectedGuest);
                 break;
             case GamePhase.MenuSelection:
                 selectionPanel.SetActive(true);
+                SetStartCamera();
                 RecipeManager.Instance.SelectRandomRecipe();
-                UpdateSelectionUI(); // 💡 여기서 큰 화면과 양쪽 HUD를 동시에 세팅합니다.
+                UpdateSelectionUI();
                 break;
             case GamePhase.Farming:
                 farmingHUD.SetActive(true);
+                SetFarmingCamera();
                 timer = farmingTime;
                 if (RecipeManager.Instance.SelectedRecipe == null)
                 {
@@ -110,10 +144,18 @@ public class GamePhaseManager : MonoBehaviour
                 break;
             case GamePhase.Cooking:
                 cookingPanel.SetActive(true);
+                SetStartCamera();
+                if (SelectedGuest != null && cookingCharImage != null)
+                {
+                    cookingCharImage.sprite = SelectedGuest.characterSprite;
+                    cookingCharImage.color = SelectedGuest.characterSprite != null ? Color.white : Color.clear;
+                }
                 StartCoroutine(CookingSequence());
                 break;
             case GamePhase.Result:
                 resultPanel.SetActive(true);
+                SetStartCamera();
+                StartCoroutine(ResultDialogueSequence());
                 break;
         }
     }
@@ -230,13 +272,112 @@ public class GamePhaseManager : MonoBehaviour
     public void OnClickStart() => ChangePhase(GamePhase.Tutorial);
     public void OnClickPlay() => ChangePhase(GamePhase.MenuSelection);
     public void OnSelectionComplete() => ChangePhase(GamePhase.Farming);
+    public void OnClickRestart() => ChangePhase(GamePhase.Start);
+
+    private void SetStartCamera()
+    {
+        if (startCamera != null) startCamera.enabled = true;
+        if (player1Cam != null) { player1Cam.enabled = false; player1Cam.GetComponent<Camera>().enabled = false; }
+        if (player2Cam != null) { player2Cam.enabled = false; player2Cam.GetComponent<Camera>().enabled = false; }
+    }
+
+    private void SetFarmingCamera()
+    {
+        if (startCamera != null) startCamera.enabled = false;
+        if (player1Cam != null) { player1Cam.enabled = true; player1Cam.GetComponent<Camera>().enabled = true; }
+        if (player2Cam != null) { player2Cam.enabled = true; player2Cam.GetComponent<Camera>().enabled = true; }
+    }
+
+    private IEnumerator TypewriterText(TMP_Text textComp, string fullText, float charDelay = 0.04f)
+    {
+        textComp.text = "";
+        foreach (char c in fullText)
+        {
+            textComp.text += c;
+            yield return new WaitForSeconds(charDelay);
+        }
+    }
+
+    private IEnumerator WaitForAdvance()
+    {
+        _advanceDialogue = false;
+        yield return null;
+        yield return new WaitUntil(() => _advanceDialogue);
+        _advanceDialogue = false;
+    }
+
+    private RecipeSO FindBestMatchRecipe(List<IngredientSO> cards)
+    {
+        if (cards == null || cards.Count == 0) return null;
+        RecipeSO best = null;
+        int bestScore = -1;
+        foreach (var recipe in RecipeManager.Instance.AllRecipes)
+        {
+            int s = scoringSystem.CalculateCookingScore(cards, recipe);
+            if (s > bestScore) { bestScore = s; best = recipe; }
+        }
+        return bestScore > 0 ? best : null;
+    }
+
+    private IEnumerator ShowLine(string text)
+    {
+        if (resultScoreText == null) yield break;
+        yield return StartCoroutine(TypewriterText(resultScoreText, text));
+        if (resultNextIndicator != null) resultNextIndicator.SetActive(true);
+        yield return StartCoroutine(WaitForAdvance());
+        if (resultNextIndicator != null) resultNextIndicator.SetActive(false);
+    }
+
+    private IEnumerator ResultDialogueSequence()
+    {
+        if (resultRestartButtonGO != null) resultRestartButtonGO.SetActive(false);
+        if (resultNextIndicator != null) resultNextIndicator.SetActive(false);
+        if (resultScoreText != null) resultScoreText.text = "";
+
+        // Line 1: P1 dish identification
+        RecipeSO p1Best = FindBestMatchRecipe(lastP1Cards);
+        string p1Dish = p1Best != null ? p1Best.recipeName : "알 수 없는 요리";
+        yield return StartCoroutine(ShowLine($"호오... 플레이어1님의 요리는 {p1Dish}이군요!\n{lastP1Score}점입니다."));
+
+        // Line 2: P2 dish identification
+        RecipeSO p2Best = FindBestMatchRecipe(lastP2Cards);
+        string p2Dish = p2Best != null ? p2Best.recipeName : "알 수 없는 요리";
+        yield return StartCoroutine(ShowLine($"그리고 플레이어2님의 요리는 {p2Dish}이군요!\n{lastP2Score}점입니다."));
+
+        // Line 3: Winner reveal
+        string winnerLine;
+        if (lastP1Score > lastP2Score)
+            winnerLine = "두구두구두구...\n제가 손들어주고 싶은 분은 이 분입니다!\n\n<color=blue>플레이어1 승리!</color>";
+        else if (lastP2Score > lastP1Score)
+            winnerLine = "두구두구두구...\n제가 손들어주고 싶은 분은 이 분입니다!\n\n<color=red>플레이어2 승리!</color>";
+        else
+            winnerLine = "두구두구두구...\n두 분 모두 훌륭합니다!\n\n무승부!";
+        yield return StartCoroutine(ShowLine(winnerLine));
+
+        // Line 4: Guest score reaction
+        if (lastScoreLine != null)
+            yield return StartCoroutine(ShowLine(lastScoreLine));
+
+        if (resultRestartButtonGO != null) resultRestartButtonGO.SetActive(true);
+    }
 
     private IEnumerator CookingSequence()
     {
-        Debug.Log("조리를 시작합니다...");
-        yield return new WaitForSeconds(1.0f);
-        yield return new WaitForSeconds(1.0f);
-        yield return new WaitForSeconds(1.0f);
+        if (cookingFillImage != null) cookingFillImage.fillAmount = 0f;
+        if (cookingStatusText != null) cookingStatusText.text = "요리를 준비하는 중...";
+
+        float elapsed = 0f;
+        while (elapsed < cookingBarDuration)
+        {
+            elapsed += Time.deltaTime;
+            if (cookingFillImage != null)
+                cookingFillImage.fillAmount = Mathf.Clamp01(elapsed / cookingBarDuration);
+            yield return null;
+        }
+
+        if (cookingFillImage != null) cookingFillImage.fillAmount = 1f;
+        if (cookingStatusText != null) cookingStatusText.text = "요리 완성!";
+        yield return new WaitForSeconds(0.6f);
 
         RecipeSO targetRecipe = RecipeManager.Instance.SelectedRecipe;
         int p1Score = 0;
@@ -244,25 +385,31 @@ public class GamePhaseManager : MonoBehaviour
 
         if (targetRecipe != null)
         {
-            p1Score = scoringSystem.CalculateCookingScore(player1Inventory.GetOwnedCards(), targetRecipe);
-            p2Score = scoringSystem.CalculateCookingScore(player2Inventory.GetOwnedCards(), targetRecipe);
+            p1Score = scoringSystem.CalculateCookingScore(player1Inventory.GetOwnedCards(), targetRecipe, player1Inventory);
+            p2Score = scoringSystem.CalculateCookingScore(player2Inventory.GetOwnedCards(), targetRecipe, player2Inventory);
         }
 
-        string resultMessage = targetRecipe != null ? $"오늘의 요리: {targetRecipe.recipeName}\n\n" : "오늘의 요리: 알 수 없음\n\n";
-        resultMessage += $"P1 점수: {p1Score}점\n";
-        resultMessage += $"P2 점수: {p2Score}점\n\n";
+        lastP1Score  = p1Score;
+        lastP2Score  = p2Score;
+        lastRecipe   = targetRecipe;
+        lastScoreLine = null;
+        lastP1Cards  = player1Inventory != null ? new List<IngredientSO>(player1Inventory.GetOwnedCards()) : new List<IngredientSO>();
+        lastP2Cards  = player2Inventory != null ? new List<IngredientSO>(player2Inventory.GetOwnedCards()) : new List<IngredientSO>();
 
-        if (p1Score > p2Score)
-            resultMessage += "<color=blue>플레이어 1 승리!</color>";
-        else if (p2Score > p1Score)
-            resultMessage += "<color=red>플레이어 2 승리!</color>";
-        else
-            resultMessage += "무승부!";
-
-        if (resultScoreText != null)
+        if (SelectedGuest != null)
         {
-            resultMessage = resultMessage.Replace("\n", " ");
-            resultScoreText.text = resultMessage;
+            int maxScore = Mathf.Max(p1Score, p2Score);
+            var scoreLines = (maxScore >= 50) ? SelectedGuest.highScoreLines : SelectedGuest.lowScoreLines;
+            if (scoreLines != null && scoreLines.Count > 0)
+                lastScoreLine = scoreLines[Random.Range(0, scoreLines.Count)];
+
+            if (resultCharImage != null)
+            {
+                resultCharImage.sprite = SelectedGuest.characterSprite;
+                resultCharImage.color = SelectedGuest.characterSprite != null ? Color.white : Color.clear;
+            }
+            if (resultNameText != null)
+                resultNameText.text = SelectedGuest.guestName;
         }
 
         ChangePhase(GamePhase.Result);

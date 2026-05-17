@@ -2,18 +2,28 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System.Collections;
 
 public class InventoryUI : MonoBehaviour
 {
     public Inventory targetInventory;
     public KeyCode toggleKey = KeyCode.Tab;
     public KeyCode confirmKey = KeyCode.F;
+    public KeyCode prevKey = KeyCode.A;
+    public KeyCode nextKey = KeyCode.D;
+    [Tooltip("prevKey 대체 키 (P1=W, P2=UpArrow)")]
+    public KeyCode altPrevKey = KeyCode.W;
+    [Tooltip("nextKey 대체 키 (P1=S, P2=DownArrow)")]
+    public KeyCode altNextKey = KeyCode.S;
     public GameObject uiPanel;
+
+    [Header("스크롤")]
+    public ScrollRect cardScrollRect;
 
     [Header("카드 슬롯 설정")]
     public List<Image> cardIcons;
     public List<TMP_Text> cardTexts;
-    // 💡 NEW: 프리팹 자식에 새로 만든 'SelectionBorder' 이미지들을 여기에 연결합니다.
+    // 프리팹 자식에 새로 만든 'SelectionBorder' 이미지들을 여기에 연결합니다.
     public List<Image> cardHighlights;
 
     [Header("교체용 추가 UI (주운 재료)")]
@@ -42,17 +52,41 @@ public class InventoryUI : MonoBehaviour
         {
             HandleUIInput();
 
-            if (Input.GetKeyDown(toggleKey) && !targetInventory.isReplacing)
+            // 💡기존 Input.GetKeyDown 대신 엔터 호환 검사 함수 사용
+            if (IsToggleKeyPressed() && !targetInventory.isReplacing)
             {
                 CloseInventory();
             }
             return;
         }
 
-        if (Input.GetKeyDown(toggleKey) && !targetInventory.isReplacing)
+        // 💡기존 Input.GetKeyDown 대신 엔터 호환 검사 함수 사용
+        if (IsToggleKeyPressed() && !targetInventory.isReplacing)
         {
             OpenInventory();
         }
+    }
+
+    // 💡 NEW: 텐키리스(TKL) 키보드 유저를 위해 두 종류의 엔터키를 상호 호환해주는 로직
+    private bool IsToggleKeyPressed()
+    {
+        if (Input.GetKeyDown(toggleKey)) return true;
+
+        // 인스펙터 설정이 키패드 엔터인데 일반 엔터를 누른 경우 혹은 그 반대 처리
+        if (toggleKey == KeyCode.KeypadEnter && Input.GetKeyDown(KeyCode.Return)) return true;
+        if (toggleKey == KeyCode.Return && Input.GetKeyDown(KeyCode.KeypadEnter)) return true;
+
+        return false;
+    }
+
+    // 💡 NEW: 혹시 모를 확정 키 엔터 매핑을 위한 상호 호환 로직
+    private bool IsConfirmKeyPressed()
+    {
+        if (Input.GetKeyDown(confirmKey)) return true;
+        if (confirmKey == KeyCode.KeypadEnter && Input.GetKeyDown(KeyCode.Return)) return true;
+        if (confirmKey == KeyCode.Return && Input.GetKeyDown(KeyCode.KeypadEnter)) return true;
+
+        return false;
     }
 
     private void StartReplaceMode()
@@ -86,20 +120,23 @@ public class InventoryUI : MonoBehaviour
 
         int maxSelectionCount = targetInventory.isReplacing ? cardCount + 1 : cardCount;
 
-        if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.A))
+        if (Input.GetKeyDown(prevKey) || Input.GetKeyDown(altPrevKey))
         {
             selectedIndex--;
             if (selectedIndex < 0) selectedIndex = maxSelectionCount - 1;
             UpdateUI();
+            ScrollToSelected();
         }
-        else if (Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.D))
+        else if (Input.GetKeyDown(nextKey) || Input.GetKeyDown(altNextKey))
         {
             selectedIndex++;
             if (selectedIndex >= maxSelectionCount) selectedIndex = 0;
             UpdateUI();
+            ScrollToSelected();
         }
 
-        if (Input.GetKeyDown(confirmKey))
+        // 💡 호환 검사 함수 적용
+        if (IsConfirmKeyPressed())
         {
             if (targetInventory.isReplacing)
             {
@@ -137,7 +174,6 @@ public class InventoryUI : MonoBehaviour
             Image frameImg = (iconImg.transform.parent != null) ? iconImg.transform.parent.GetComponent<Image>() : null;
             if (frameImg == null) frameImg = iconImg;
 
-            // 💡 NEW: 이번 루프에 해당하는 하이라이트용 테두리 이미지를 가져옵니다.
             Image highlightImg = (i < cardHighlights.Count) ? cardHighlights[i] : null;
 
             if (i < cards.Count)
@@ -152,15 +188,11 @@ public class InventoryUI : MonoBehaviour
                     cardTexts[i].gameObject.SetActive(true);
                 }
 
-                // 기존 카드 5장 중 하나가 선택되었을 때 효과
                 if (isVisible && i == selectedIndex)
                 {
                     frameImg.transform.localScale = Vector3.one * 1.15f;
-
-                    // 💡 NEW 로직: 배경색(frameImg.color)은 건드리지 않습니다! 흰색 유지.
                     frameImg.color = Color.white;
 
-                    // 💡 NEW 로직: 대신 별도로 분리한 테두리 이미지(highlightImg)를 켜고 색을 줍니다.
                     if (highlightImg != null)
                     {
                         highlightImg.gameObject.SetActive(true);
@@ -172,7 +204,6 @@ public class InventoryUI : MonoBehaviour
                     frameImg.transform.localScale = Vector3.one;
                     frameImg.color = Color.white;
 
-                    // 💡 NEW 로직: 선택 안 됐을 때는 하이라이트 테두리를 끕니다.
                     if (highlightImg != null) highlightImg.gameObject.SetActive(false);
                 }
             }
@@ -189,7 +220,6 @@ public class InventoryUI : MonoBehaviour
                 frameImg.transform.localScale = Vector3.one;
                 frameImg.color = Color.white;
 
-                // 💡 NEW 로직: 빈 칸일 때도 하이라이트 끔
                 if (highlightImg != null) highlightImg.gameObject.SetActive(false);
             }
         }
@@ -201,22 +231,18 @@ public class InventoryUI : MonoBehaviour
             if (pendingIcon != null) pendingIcon.sprite = targetInventory.pendingCard.icon;
             if (pendingText != null) pendingText.text = targetInventory.pendingCard.itemName;
 
-            // 새로 주운 카드(6번째 카드)가 선택되었을 때 시각 효과 주기
             Image pendingFrameImg = pendingCardUI.GetComponent<Image>();
 
-            // 💡 NEW: PendingCard 프리팹 안에도 'SelectionBorder' 자식이 있어야 합니다!
-            // PendingUI 자식 중에서 "SelectionBorder"라는 이름을 가진 Image 컴포넌트를 찾아옵니다.
             Transform pendingHighlightTransform = pendingCardUI.transform.Find("SelectionBorder");
             Image pendingHighlightImg = (pendingHighlightTransform != null) ? pendingHighlightTransform.GetComponent<Image>() : null;
 
             if (pendingFrameImg != null)
             {
-                if (isVisible && selectedIndex == cards.Count) // 선택 인덱스가 5(마지막)일 때
+                if (isVisible && selectedIndex == cards.Count)
                 {
                     pendingFrameImg.transform.localScale = Vector3.one * 1.15f;
-                    pendingFrameImg.color = Color.white; // 배경은 흰색 유지
+                    pendingFrameImg.color = Color.white;
 
-                    // 💡 NEW: 주운 카드 전용 하이라이트 테두리를 켜고 색을 줍니다 (무조건 빨강)
                     if (pendingHighlightImg != null)
                     {
                         pendingHighlightImg.gameObject.SetActive(true);
@@ -228,7 +254,6 @@ public class InventoryUI : MonoBehaviour
                     pendingFrameImg.transform.localScale = Vector3.one;
                     pendingFrameImg.color = Color.white;
 
-                    // 💡 NEW: 선택 안 됐을 때는 주운 카드 하이라이트 끔
                     if (pendingHighlightImg != null) pendingHighlightImg.gameObject.SetActive(false);
                 }
             }
@@ -237,5 +262,36 @@ public class InventoryUI : MonoBehaviour
         {
             if (pendingCardUI != null) pendingCardUI.SetActive(false);
         }
+    }
+
+    private void ScrollToSelected()
+    {
+        if (cardScrollRect == null || cardIcons.Count <= 1) return;
+        // 0 ~ 1 정규화: 첫 카드=0, 마지막=1
+        float total = targetInventory.isReplacing ? cardIcons.Count : cardIcons.Count - 1;
+        if (total <= 0) return;
+        float normalized = Mathf.Clamp01((float)selectedIndex / total);
+        // 가로 스크롤이면 horizontal, 세로면 vertical 사용
+        if (cardScrollRect.horizontal)
+            StartCoroutine(SmoothScroll(true, normalized));
+        else
+            StartCoroutine(SmoothScroll(false, 1f - normalized)); // 세로는 위=1
+    }
+
+    private IEnumerator SmoothScroll(bool horizontal, float target)
+    {
+        float elapsed = 0f;
+        float start = horizontal ? cardScrollRect.horizontalNormalizedPosition
+                                 : cardScrollRect.verticalNormalizedPosition;
+        while (elapsed < 0.15f)
+        {
+            elapsed += Time.deltaTime;
+            float val = Mathf.Lerp(start, target, elapsed / 0.15f);
+            if (horizontal) cardScrollRect.horizontalNormalizedPosition = val;
+            else            cardScrollRect.verticalNormalizedPosition   = val;
+            yield return null;
+        }
+        if (horizontal) cardScrollRect.horizontalNormalizedPosition = target;
+        else            cardScrollRect.verticalNormalizedPosition   = target;
     }
 }

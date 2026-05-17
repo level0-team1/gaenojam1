@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -11,11 +10,19 @@ public class Inventory : MonoBehaviour
 
     [Header("상태 플래그")]
     public bool isReplacing = false;
-    public bool isUIOpen = false; // 💡 추가: 현재 인벤토리 창이 열려있는가? (이동 방지용)
+    public bool isUIOpen    = false;
     public IngredientSO pendingCard { get; private set; }
+
+    [Header("썩은 재료 (곰팡이 카드용)")]
+    [SerializeField] private IngredientSO rottenIngredient;
+
+    public SpecialCardSO heldSpecialCard { get; private set; }
 
     public Action OnReplaceModeStarted;
     public Action OnInventoryUpdated;
+    public Action OnSpecialCardUpdated;
+
+    // ──────────────────────────────── 재료 카드 ────────────────────────────────
 
     public bool AddCard(IngredientSO newCard)
     {
@@ -23,9 +30,8 @@ public class Inventory : MonoBehaviour
 
         if (ownedCards.Count >= MAX_SLOTS)
         {
-            pendingCard = newCard;
-            isReplacing = true;
-
+            pendingCard  = newCard;
+            isReplacing  = true;
             OnReplaceModeStarted?.Invoke();
             return true;
         }
@@ -43,6 +49,7 @@ public class Inventory : MonoBehaviour
             EndReplaceMode();
         }
     }
+
     public void CancelReplace()
     {
         if (isReplacing)
@@ -68,8 +75,54 @@ public class Inventory : MonoBehaviour
         }
     }
 
-    public List<IngredientSO> GetOwnedCards()
+    public List<IngredientSO> GetOwnedCards() => new List<IngredientSO>(ownedCards);
+
+    // ──────────────────────────────── 특수 카드 ────────────────────────────────
+
+    public void AddSpecialCard(SpecialCardSO card)
     {
-        return new List<IngredientSO>(ownedCards);
+        heldSpecialCard = card;
+        OnSpecialCardUpdated?.Invoke();
+        Debug.Log($"{gameObject.name}: 특수카드 [{card.cardName}] 보관");
+    }
+
+    public void ConsumeSpecialCard()
+    {
+        heldSpecialCard = null;
+        OnSpecialCardUpdated?.Invoke();
+    }
+
+    // ──────────────────────────────── 특수 카드 효과 ─────────────────────────
+
+    public void DropRandomIngredient()
+    {
+        if (ownedCards.Count == 0) return;
+        int idx = UnityEngine.Random.Range(0, ownedCards.Count);
+        Debug.Log($"<color=orange>{gameObject.name}: {ownedCards[idx].itemName} 재료를 흘렸습니다!</color>");
+        ownedCards.RemoveAt(idx);
+        OnInventoryUpdated?.Invoke();
+    }
+
+    public void MoldRandomIngredient()
+    {
+        if (ownedCards.Count == 0) return;
+
+        if (heldSpecialCard != null && heldSpecialCard.cardType == SpecialCardType.FreshShield)
+        {
+            Debug.Log($"<color=cyan>{gameObject.name}: 신선 보호막으로 곰팡이 차단!</color>");
+            ConsumeSpecialCard();
+            return;
+        }
+
+        if (rottenIngredient == null)
+        {
+            Debug.LogWarning($"{gameObject.name}: rottenIngredient 미설정 — 인스펙터에서 썩은 재료 SO를 연결해주세요.");
+            return;
+        }
+
+        int idx = UnityEngine.Random.Range(0, ownedCards.Count);
+        Debug.Log($"<color=red>{gameObject.name}: {ownedCards[idx].itemName}에 곰팡이 발생! → 썩은 재료</color>");
+        ownedCards[idx] = rottenIngredient;
+        OnInventoryUpdated?.Invoke();
     }
 }

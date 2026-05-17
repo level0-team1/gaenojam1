@@ -3,46 +3,79 @@ using UnityEngine;
 
 public class Basket : MonoBehaviour, IInteractable
 {
+    [Header("ë‚´ìš©ë¬¼ (ë‘˜ ì¤‘ í•˜ë‚˜ë§Œ ì„¤ì •)")]
     public IngredientSO containedIngredient;
-    private Animator anim;
+    public SpecialCardSO containedSpecialCard;
 
+    private Animator anim;
     private enum BasketState { Closed, Peeked, Empty }
     private BasketState currentState = BasketState.Closed;
     private bool isAnimating = false;
+    private Inventory lastInteractor;
 
-    [Header("Å¸°Ù Ç¥½Ã UI")]
+    [Header("íƒ€ê²Ÿ í‘œì‹œ UI")]
     public GameObject targetIndicator;
+
+    [Header("íŠ¹ìˆ˜ì¹´ë“œ ì• ë‹ˆë©”ì´ì…˜")]
+    public float specialOpenDuration = 0.5f;
+
+    private bool IsSpecial => containedSpecialCard != null;
 
     void Awake() => anim = GetComponent<Animator>();
 
     public void OnInteract(Inventory playerInventory)
     {
         if (isAnimating || currentState == BasketState.Empty) return;
+        lastInteractor = playerInventory;
 
         if (currentState == BasketState.Closed)
             StartCoroutine(PeekSequence());
         else if (currentState == BasketState.Peeked)
             StartCoroutine(CollectSequence(playerInventory));
     }
+
     public void SetHighlight(bool isActive)
     {
-        if (targetIndicator != null)
-        {
-            targetIndicator.SetActive(isActive);
-        }
+        if (targetIndicator != null) targetIndicator.SetActive(isActive);
     }
 
     IEnumerator PeekSequence()
     {
         isAnimating = true;
-        anim.SetTrigger("Open"); // ¿­±â ¾Ö´Ï¸ŞÀÌ¼Ç
-        Debug.Log($"[½Ç¹« ·Î±×] ¹Ù±¸´Ï ³»¿ë¹° È®ÀÎ: {containedIngredient.itemName}");
 
-        yield return new WaitForSeconds(0.8f); // ¾Ö´Ï¸ŞÀÌ¼Ç ´ë±â (½Ç¹«¿¡¼± Animation Event ÃßÃµ)
+        if (IsSpecial)
+        {
+            anim.SetTrigger("OpenSpecial");
+            Debug.Log($"[ë°”êµ¬ë‹ˆ] íŠ¹ìˆ˜ì¹´ë“œ ë°œê²¬: {containedSpecialCard.cardName}");
+            yield return new WaitForSeconds(specialOpenDuration);
 
-        anim.SetTrigger("Close"); // ´Ù½Ã ´İ±â
+            var selfStatus2 = lastInteractor.GetComponent<PlayerStatus>();
+            if (containedSpecialCard.isInstant)
+            {
+                TriggerInstantCard(containedSpecialCard, lastInteractor);
+            }
+            else
+            {
+                lastInteractor.AddSpecialCard(containedSpecialCard);
+                if (selfStatus2 != null)
+                    SpecialCardNotify.ShowOnCanvas(selfStatus2.playerCanvas, containedSpecialCard);
+            }
+
+            currentState = BasketState.Empty;
+            isAnimating = false;
+            Destroy(gameObject);
+            yield break;
+        }
+
+        // ì¼ë°˜ ì¬ë£Œ ë°”êµ¬ë‹ˆ
+        Debug.Log($"[ë°”êµ¬ë‹ˆ] ë‚´ìš©ë¬¼ í™•ì¸: {containedIngredient.itemName}");
+        anim.SetTrigger("Open");
+        var selfStatus = lastInteractor.GetComponent<PlayerStatus>();
+        if (selfStatus != null)
+            IngredientCardNotify.Show(selfStatus.playerCanvas, containedIngredient);
+        yield return new WaitForSeconds(0.8f);
+        anim.SetTrigger("Close");
         yield return new WaitForSeconds(0.5f);
-
         currentState = BasketState.Peeked;
         isAnimating = false;
     }
@@ -52,18 +85,85 @@ public class Basket : MonoBehaviour, IInteractable
         isAnimating = true;
         anim.SetTrigger("Open");
 
-        if (playerInventory.AddCard(containedIngredient))
+        if (IsSpecial)
         {
+            // íŠ¹ìˆ˜ì¹´ë“œëŠ” PeekSequenceì—ì„œ ì¦‰ì‹œ ì²˜ë¦¬ë˜ë¯€ë¡œ ì—¬ê¸° ë„ë‹¬í•˜ì§€ ì•ŠìŒ
             yield return new WaitForSeconds(0.3f);
+            playerInventory.AddSpecialCard(containedSpecialCard);
             currentState = BasketState.Empty;
-            Destroy(gameObject); // È¤Àº ºñÈ°¼ºÈ­ ¹× ÀÌÆåÆ® Àç»ı
+            Destroy(gameObject);
         }
         else
         {
-            // ÀÎº¥Åä¸® ²Ë Ã¡À» ¶§ Ã³¸®
-            anim.SetTrigger("Close");
-            yield return new WaitForSeconds(0.5f);
-            isAnimating = false;
+            if (playerInventory.AddCard(containedIngredient))
+            {
+                yield return new WaitForSeconds(0.3f);
+                currentState = BasketState.Empty;
+                Destroy(gameObject);
+            }
+            else
+            {
+                anim.SetTrigger("Close");
+                yield return new WaitForSeconds(0.5f);
+                isAnimating = false;
+            }
         }
+    }
+
+    private void TriggerInstantCard(SpecialCardSO card, Inventory self)
+    {
+        PlayerStatus selfStatus = self.GetComponent<PlayerStatus>();
+        Inventory    oppInv     = GetOpponentInventory(self);
+        PlayerStatus oppStatus  = oppInv?.GetComponent<PlayerStatus>();
+
+        bool isDebuff = false;
+        bool isSelfBuff = false;
+
+        switch (card.cardType)
+        {
+            case SpecialCardType.RocketBasket:
+                selfStatus?.ApplySpeedBoost(2f, 5f);
+                isSelfBuff = true;
+                break;
+            case SpecialCardType.SlowBasket:
+                oppStatus?.ApplySpeedBoost(0.4f, 3f);
+                isDebuff = true;
+                break;
+            case SpecialCardType.Blackout:
+                oppStatus?.ApplyBlackout(3f);
+                isDebuff = true;
+                break;
+            case SpecialCardType.ControlReverse:
+                oppStatus?.ApplyControlReverse(3f);
+                isDebuff = true;
+                break;
+            case SpecialCardType.Stun:
+                oppStatus?.ApplyStun(1f);
+                isDebuff = true;
+                break;
+            case SpecialCardType.DropIngredient:
+                oppInv?.DropRandomIngredient();
+                isDebuff = true;
+                break;
+            case SpecialCardType.Mold:
+                oppInv?.MoldRandomIngredient();
+                isDebuff = true;
+                break;
+        }
+
+        if (isDebuff && oppStatus != null)
+            SpecialCardNotify.ShowOnCanvas(oppStatus.playerCanvas, card);
+        if (isSelfBuff && selfStatus != null)
+            SpecialCardNotify.ShowOnCanvas(selfStatus.playerCanvas, card);
+
+        Debug.Log($"[íŠ¹ìˆ˜ì¹´ë“œ] <color=magenta>{card.cardName}</color> ë°œë™! ì‚¬ìš©ì: {self.gameObject.name}");
+    }
+
+    private Inventory GetOpponentInventory(Inventory self)
+    {
+        var allInvs = FindObjectsByType<Inventory>(FindObjectsSortMode.None);
+        foreach (var inv in allInvs)
+            if (inv != self) return inv;
+        return null;
     }
 }
