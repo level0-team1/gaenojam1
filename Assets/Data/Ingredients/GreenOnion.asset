@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fdd798e50451ae64eb9d568e438d8f94, type: 3}
   m_Name: GreenOnion
   m_EditorClassIdentifier: Assembly-CSharp::IngredientSO
-  itemName: greenonion
+  itemName: "\uB300\uD30C"
   category: 1
-  icon: {fileID: 8548882304161029998, guid: 956a0c6c0fc40b4448795f2b3aaf543f, type: 3}
+  icon: {fileID: 6042094868838837347, guid: 765e23518db2eb440b03a9ea0fc84793, type: 3}
+  isRotten: 0

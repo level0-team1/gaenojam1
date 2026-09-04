@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fdd798e50451ae64eb9d568e438d8f94, type: 3}
   m_Name: Dashima
   m_EditorClassIdentifier: Assembly-CSharp::IngredientSO
-  itemName: dashima
+  itemName: "\uB2E4\uC2DC\uB9C8"
   category: 1
-  icon: {fileID: 8548882304161029998, guid: 956a0c6c0fc40b4448795f2b3aaf543f, type: 3}
+  icon: {fileID: 3944782247759432245, guid: d3ec774267766e343bef92f7113ab9b8, type: 3}

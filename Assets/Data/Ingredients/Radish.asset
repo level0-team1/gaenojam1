@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fdd798e50451ae64eb9d568e438d8f94, type: 3}
   m_Name: Radish
   m_EditorClassIdentifier: Assembly-CSharp::IngredientSO
-  itemName: redish
+  itemName: "\uBB34"
   category: 1
-  icon: {fileID: 8548882304161029998, guid: 956a0c6c0fc40b4448795f2b3aaf543f, type: 3}
+  icon: {fileID: -1301080772826853288, guid: ed9a24004ead75941bfde30a14304bad, type: 3}

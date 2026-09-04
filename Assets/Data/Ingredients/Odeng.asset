@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fdd798e50451ae64eb9d568e438d8f94, type: 3}
   m_Name: Odeng
   m_EditorClassIdentifier: Assembly-CSharp::IngredientSO
-  itemName: odeng
+  itemName: "\uC624\uB385"
   category: 0
-  icon: {fileID: 8548882304161029998, guid: 956a0c6c0fc40b4448795f2b3aaf543f, type: 3}
+  icon: {fileID: -3632946825509077377, guid: 876df1cab6b112f42abae5481f6c1f93, type: 3}

@@ -1,60 +1,128 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class Inventory : MonoBehaviour
 {
-    // ÃÖ´ë ¼ÒÁö °¡´ÉÇÑ ½ÄÀç·á Ä«µå ¼ö 
-    private const int MAX_SLOTS = 6;
+    private const int MAX_SLOTS = 5;
 
-    // ÇöÀç ÇÃ·¹ÀÌ¾î°¡ º¸À¯ÇÑ ½ÄÀç·á Ä«µå ¸®½ºÆ®
-    // (Dictionaryº¸´Ù List°¡ 6Ä­ UI ÀÎµ¦½º ¸ÅÄª¿¡ ´õ À¯¸®ÇÕ´Ï´Ù)
     [SerializeField] private List<IngredientSO> ownedCards = new List<IngredientSO>();
 
-    // ½ÄÀç·á Ä«µå Ãß°¡ (¹Ù±¸´Ï »óÈ£ÀÛ¿ë ½Ã È£Ãâ) [cite: 44, 45, 73]
+    [Header("ìƒíƒœ í”Œë˜ê·¸")]
+    public bool isReplacing = false;
+    public bool isUIOpen    = false;
+    public IngredientSO pendingCard { get; private set; }
+
+    [Header("ì©ì€ ì¬ë£Œ (ê³°íŒ¡ì´ ì¹´ë“œìš©)")]
+    [SerializeField] private IngredientSO rottenIngredient;
+
+    public SpecialCardSO heldSpecialCard { get; private set; }
+
+    public Action OnReplaceModeStarted;
+    public Action OnInventoryUpdated;
+    public Action OnSpecialCardUpdated;
+
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ ì¬ë£Œ ì¹´ë“œ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
     public bool AddCard(IngredientSO newCard)
     {
-        // 1. ÀÎº¥Åä¸® Ç® Ã¼Å© 
+        if (isReplacing) return false;
+
         if (ownedCards.Count >= MAX_SLOTS)
         {
-            Debug.Log($"{gameObject.name}: ÀÎº¥Åä¸®°¡ °¡µæ Ã¡½À´Ï´Ù! (6/6)");
-            return false; // Ãß°¡ ½ÇÆĞ
+            pendingCard  = newCard;
+            isReplacing  = true;
+            OnReplaceModeStarted?.Invoke();
+            return true;
         }
 
-        // 2. Ä«µå Ãß°¡
         ownedCards.Add(newCard);
-        Debug.Log($"{gameObject.name}: {newCard.itemName} Ä«µå È¹µæ! (ÇöÀç: {ownedCards.Count}/{MAX_SLOTS})");
-
-        // UI °»½Å ·ÎÁ÷ÀÌ ÀÖ´Ù¸é ¿©±â¼­ È£Ãâ (ÆÀ¿ø ÅÂ½ºÅ©) [cite: 53, 70]
+        OnInventoryUpdated?.Invoke();
         return true;
     }
 
-    // Ä«µå ¹ö¸®±â/±³Ã¼ ·ÎÁ÷ (ÇÊ¿ä ½Ã È£Ãâ)
+    public void ConfirmReplace(int discardIndex)
+    {
+        if (isReplacing && pendingCard != null && discardIndex >= 0 && discardIndex < ownedCards.Count)
+        {
+            ownedCards[discardIndex] = pendingCard;
+            EndReplaceMode();
+        }
+    }
+
+    public void CancelReplace()
+    {
+        if (isReplacing)
+        {
+            Debug.Log("ìƒˆë¡œ ì£¼ìš´ ì¹´ë“œë¥¼ ë²„ë ¸ìŠµë‹ˆë‹¤.");
+            EndReplaceMode();
+        }
+    }
+
+    private void EndReplaceMode()
+    {
+        pendingCard = null;
+        isReplacing = false;
+        OnInventoryUpdated?.Invoke();
+    }
+
     public void RemoveCard(int index)
     {
         if (index >= 0 && index < ownedCards.Count)
         {
-            Debug.Log($"{gameObject.name}: {ownedCards[index].itemName} Ä«µå¸¦ ¹ö·È½À´Ï´Ù.");
+            Debug.Log($"{gameObject.name}: {ownedCards[index].itemName} ì¹´ë“œë¥¼ ë²„ë ¸ìŠµë‹ˆë‹¤.");
             ownedCards.RemoveAt(index);
         }
     }
 
-    // Á¶¸® È­¸éÀ¸·Î ÇöÀç Ä«µå ¸ñ·ÏÀ» ³Ñ°ÜÁÖ±â À§ÇÑ ÇÔ¼ö [cite: 22, 39]
-    public List<IngredientSO> GetOwnedCards()
+    public List<IngredientSO> GetOwnedCards() => new List<IngredientSO>(ownedCards);
+
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ íŠ¹ìˆ˜ ì¹´ë“œ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+    public void AddSpecialCard(SpecialCardSO card)
     {
-        return new List<IngredientSO>(ownedCards);
+        heldSpecialCard = card;
+        OnSpecialCardUpdated?.Invoke();
+        Debug.Log($"{gameObject.name}: íŠ¹ìˆ˜ì¹´ë“œ [{card.cardName}] ë³´ê´€");
     }
 
-    // Æ¯Á¤ Àç·á¸¦ ¸î °³ °¡Áö°í ÀÖ´ÂÁö È®ÀÎ (UI ÈùÆ®³ª Ã¼Å©¿ë) [cite: 1, 49, 79]
-    public int GetIngredientCount(IngredientSO target)
+    public void ConsumeSpecialCard()
     {
-        int count = 0;
-        foreach (var card in ownedCards)
+        heldSpecialCard = null;
+        OnSpecialCardUpdated?.Invoke();
+    }
+
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ íŠ¹ìˆ˜ ì¹´ë“œ íš¨ê³¼ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+    public void DropRandomIngredient()
+    {
+        if (ownedCards.Count == 0) return;
+        int idx = UnityEngine.Random.Range(0, ownedCards.Count);
+        Debug.Log($"<color=orange>{gameObject.name}: {ownedCards[idx].itemName} ì¬ë£Œë¥¼ í˜ë ¸ìŠµë‹ˆë‹¤!</color>");
+        ownedCards.RemoveAt(idx);
+        OnInventoryUpdated?.Invoke();
+    }
+
+    public void MoldRandomIngredient()
+    {
+        if (ownedCards.Count == 0) return;
+
+        if (heldSpecialCard != null && heldSpecialCard.cardType == SpecialCardType.FreshShield)
         {
-            if (card == target) count++;
+            Debug.Log($"<color=cyan>{gameObject.name}: ì‹ ì„  ë³´í˜¸ë§‰ìœ¼ë¡œ ê³°íŒ¡ì´ ì°¨ë‹¨!</color>");
+            ConsumeSpecialCard();
+            return;
         }
-        return count;
-    }
 
-    // ±âÁ¸ÀÇ CheckVictory´Â »èÁ¦µÇ¾ú½À´Ï´Ù. 
-    // ½Â¸® ÆÇÁ¤Àº 1ºĞ ÈÄ 'Á¶¸® È­¸é'¿¡¼­ ScoringSystemÀÌ ¼öÇàÇÕ´Ï´Ù. [cite: 13, 36]
+        if (rottenIngredient == null)
+        {
+            Debug.LogWarning($"{gameObject.name}: rottenIngredient ë¯¸ì„¤ì • â€” ì¸ìŠ¤í™í„°ì—ì„œ ì©ì€ ì¬ë£Œ SOë¥¼ ì—°ê²°í•´ì£¼ì„¸ìš”.");
+            return;
+        }
+
+        int idx = UnityEngine.Random.Range(0, ownedCards.Count);
+        Debug.Log($"<color=red>{gameObject.name}: {ownedCards[idx].itemName}ì— ê³°íŒ¡ì´ ë°œìƒ! â†’ ì©ì€ ì¬ë£Œ</color>");
+        ownedCards[idx] = rottenIngredient;
+        OnInventoryUpdated?.Invoke();
+    }
 }

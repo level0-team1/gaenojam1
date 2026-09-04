@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 42bf6495cb49cda4a8d90a1a98160eaf, type: 3}
   m_Name: BeefRiceBowl
   m_EditorClassIdentifier: Assembly-CSharp::RecipeSO
-  recipeName: beefrice
-  resultImage: {fileID: 0}
+  recipeName: "\uC18C\uACE0\uAE30\uB36E\uBC25"
+  resultImage: {fileID: 21300000, guid: d22070d6a3da6d84f81af8d95ba53f79, type: 3}
   requiredIngredients:
   - ingredient: {fileID: 11400000, guid: a9d70117453278f46ae47c1658378fa1, type: 2}
     amount: 1
@@ -25,5 +25,4 @@ MonoBehaviour:
     amount: 1
   - ingredient: {fileID: 11400000, guid: 15275c17ba001b74caa993706ce8f5fc, type: 2}
     amount: 1
-  - ingredient: {fileID: 11400000, guid: 370efe29b3c0bd84882edd2aebde9d5d, type: 2}
-    amount: 1
+  revealCount: 2

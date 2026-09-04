@@ -1,11 +1,12 @@
-using System.Collections.Generic; // 추가
-using UnityEditor.VersionControl;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class BasketSpawner : MonoBehaviour
 {
     public GameObject basketPrefab;
-    public List<IngredientSO> ingredientPool; // 유민님이 만든 10종 재료 리스트
+    public List<IngredientSO> ingredientPool;
+    public List<SpecialCardSO> specialCardPool;
+    [Range(0f, 1f)] public float specialCardChance = 0.2f;
     public int basketCount = 30;
     public Vector2 minBounds;
     public Vector2 maxBounds;
@@ -14,9 +15,7 @@ public class BasketSpawner : MonoBehaviour
     void Start()
     {
         for (int i = 0; i < basketCount; i++)
-        {
             SpawnBasket();
-        }
     }
 
     void SpawnBasket()
@@ -29,14 +28,21 @@ public class BasketSpawner : MonoBehaviour
 
             if (!Physics2D.OverlapCircle(pos, checkRadius))
             {
-                GameObject basketObj = Instantiate(basketPrefab, pos, Quaternion.identity);
+                GameObject basketObj  = Instantiate(basketPrefab, pos, Quaternion.identity);
+                Basket     basketScript = basketObj.GetComponent<Basket>();
+                if (basketScript == null) return;
 
-                // 생성된 바구니에 랜덤 재료 주입
-                Basket basketScript = basketObj.GetComponent<Basket>();
-                if (basketScript != null && ingredientPool.Count > 0)
+                bool spawnSpecial = specialCardPool != null && specialCardPool.Count > 0
+                                    && Random.value < specialCardChance;
+                if (spawnSpecial)
                 {
-                    int randomIndex = Random.Range(0, ingredientPool.Count);
-                    basketScript.containedIngredient = ingredientPool[randomIndex];
+                    basketScript.containedSpecialCard = specialCardPool[Random.Range(0, specialCardPool.Count)];
+                    basketScript.containedIngredient  = null;
+                }
+                else if (ingredientPool.Count > 0)
+                {
+                    basketScript.containedIngredient  = ingredientPool[Random.Range(0, ingredientPool.Count)];
+                    basketScript.containedSpecialCard = null;
                 }
                 return;
             }

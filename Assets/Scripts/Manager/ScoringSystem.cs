@@ -3,49 +3,123 @@ using UnityEngine;
 
 public class ScoringSystem : MonoBehaviour
 {
-    public int CalculateCookingScore(List<IngredientSO> potCards, RecipeSO targetRecipe)
+    public int CalculateCookingScore(List<IngredientSO> potCards, RecipeSO targetRecipe,
+                                     Inventory inventory = null)
     {
-        float totalScore = 0;
-        int correctTypeCount = 0;
-        int perfectAmountCount = 0;
+        if (targetRecipe == null || targetRecipe.requiredIngredients.Count == 0) return 0;
 
-        // 1. �÷��̾ ���� ���� ������ ���� �ľ�
-        Dictionary<IngredientSO, int> playerIngredients = new Dictionary<IngredientSO, int>();
-        foreach (var card in potCards)
+        List<IngredientSO> playerPotItems = new List<IngredientSO>(potCards);
+
+        float totalScore = 0f;
+        int totalRequiredSlots = targetRecipe.requiredIngredients.Count;
+
+        float basePointsPerSlot  = 80f / totalRequiredSlots;
+        float bonusPointsPerSlot = 20f / totalRequiredSlots;
+
+        Debug.Log($"<color=cyan>[채점 시작] 오늘의 요리: {targetRecipe.recipeName}</color>");
+
+        // ── 썩은 재료 감점 처리 ──────────────────────────────────────────────
+        foreach (var item in playerPotItems)
         {
-            if (playerIngredients.ContainsKey(card)) playerIngredients[card]++;
-            else playerIngredients.Add(card, 1);
+            if (item != null && item.isRotten)
+            {
+                totalScore -= 15f;
+                Debug.Log($"<color=red>[썩은 재료] {item.itemName} 포함 (-15점)</color>");
+            }
         }
+        playerPotItems.RemoveAll(x => x != null && x.isRotten);
 
-        // 2. �����ǿ� ��
+        // ── 1단계: 완벽 일치 ─────────────────────────────────────────────────
         foreach (var required in targetRecipe.requiredIngredients)
         {
-            if (playerIngredients.ContainsKey(required.ingredient))
-            {
-                // ��� ������ ���� ���
-                correctTypeCount++;
+            IngredientSO reqIngredient = required.ingredient;
+            int reqAmount = required.amount;
 
-                // �������� �Ϻ��� ���� ��� (���ʽ�)
-                if (playerIngredients[required.ingredient] == required.amount)
+            int exactCountInPot = 0;
+            foreach (var item in playerPotItems)
+                if (item == reqIngredient) exactCountInPot++;
+
+            if (exactCountInPot > 0)
+            {
+                totalScore += basePointsPerSlot;
+                Debug.Log($"[정답 인정] {reqIngredient.itemName} 발견! (+{basePointsPerSlot:F1}점)");
+
+                if (exactCountInPot == reqAmount)
                 {
-                    perfectAmountCount++;
+                    totalScore += bonusPointsPerSlot;
+                    Debug.Log($"[수량 보너스] {reqIngredient.itemName} 개수 완벽 일치! (+{bonusPointsPerSlot:F1}점)");
+                }
+
+                int itemsToRemove = Mathf.Min(exactCountInPot, reqAmount);
+                for (int i = 0; i < itemsToRemove; i++)
+                    playerPotItems.Remove(reqIngredient);
+            }
+        }
+
+        // ── 2단계: 카테고리 유사도 ──────────────────────────────────────────
+        foreach (var required in targetRecipe.requiredIngredients)
+        {
+            IngredientSO reqIngredient = required.ingredient;
+            IngredientSO.Category reqCategory = reqIngredient.category;
+
+            if (potCards.FindAll(x => x == reqIngredient).Count == 0)
+            {
+                IngredientSO substituteItem = null;
+                foreach (var item in playerPotItems)
+                {
+                    if (item.category == reqCategory) { substituteItem = item; break; }
+                }
+
+                if (substituteItem != null)
+                {
+                    totalScore += 10f;
+                    Debug.Log($"[유사도 인정] {reqIngredient.itemName} 대신 {substituteItem.itemName} (+10점)");
+                    playerPotItems.Remove(substituteItem);
                 }
             }
         }
 
-        // 3. ���� �ջ� (����ġ ���� ����)
-        float typeScore = (float)correctTypeCount / targetRecipe.requiredIngredients.Count * 80f;
-        float amountScore = (float)perfectAmountCount / targetRecipe.requiredIngredients.Count * 20f;
-
-        totalScore = typeScore + amountScore;
-
-        // 4. ���� ��� ���� ���� (���� ����)
-        foreach (var playerItem in playerIngredients.Keys)
+        // ── 3단계: 오답 감점 ─────────────────────────────────────────────────
+        foreach (var leftoverItem in playerPotItems)
         {
-            bool isRequired = targetRecipe.requiredIngredients.Exists(x => x.ingredient == playerItem);
-            if (!isRequired) totalScore -= 5f; // �����ǿ� ���� ��� �ϳ��� 5�� ����
+            totalScore -= 5f;
+            Debug.Log($"<color=red>[오답 감점] 무관 재료: {leftoverItem.itemName} (-5점)</color>");
         }
 
-        return Mathf.Clamp(Mathf.RoundToInt(totalScore), 0, 100);
+        // ── 보관 특수카드 효과 ───────────────────────────────────────────────
+        if (inventory != null && inventory.heldSpecialCard != null)
+        {
+            switch (inventory.heldSpecialCard.cardType)
+            {
+                case SpecialCardType.MSG:
+                    totalScore += 5f;
+                    Debug.Log("[MSG] 비장의 조미료! (+5점)");
+                    inventory.ConsumeSpecialCard();
+                    break;
+
+                case SpecialCardType.WildIngredient:
+                    // 미충족 재료 슬롯이 하나라도 있으면 한 칸 채워줌
+                    bool wildUsed = false;
+                    foreach (var required in targetRecipe.requiredIngredients)
+                    {
+                        bool matched = false;
+                        foreach (var card in potCards)
+                            if (card == required.ingredient) { matched = true; break; }
+                        if (!matched)
+                        {
+                            totalScore += basePointsPerSlot;
+                            Debug.Log($"[만능 재료] {required.ingredient.itemName} 슬롯 와일드카드! (+{basePointsPerSlot:F1}점)");
+                            wildUsed = true;
+                            break;
+                        }
+                    }
+                    if (wildUsed) inventory.ConsumeSpecialCard();
+                    break;
+            }
+        }
+
+        int finalScore = Mathf.Clamp(Mathf.RoundToInt(totalScore), 0, 100);
+        Debug.Log($"<color=yellow>[채점 완료] 최종 점수: {finalScore}점</color>");
+        return finalScore;
     }
 }

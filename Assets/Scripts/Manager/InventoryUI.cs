@@ -1,39 +1,165 @@
-using System.Collections.Generic;
-using Unity.VisualScripting;
+ï»¿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
+using System.Collections;
 
 public class InventoryUI : MonoBehaviour
 {
     public Inventory targetInventory;
-    public KeyCode toggleKey;
-    public GameObject uiPanel;        // ÀÎº¥Åä¸® ÆË¾÷ Ã¢
+    public KeyCode toggleKey = KeyCode.Tab;
+    public KeyCode confirmKey = KeyCode.F;
+    public KeyCode prevKey = KeyCode.A;
+    public KeyCode nextKey = KeyCode.D;
+    [Tooltip("prevKey ëŒ€ì²´ í‚¤ (P1=W, P2=UpArrow)")]
+    public KeyCode altPrevKey = KeyCode.W;
+    [Tooltip("nextKey ëŒ€ì²´ í‚¤ (P1=S, P2=DownArrow)")]
+    public KeyCode altNextKey = KeyCode.S;
+    public GameObject uiPanel;
 
-    [Header("Ä«µå ½½·Ô ¼³Á¤")]
-    public List<Image> cardIcons;     // ½½·Ô ³»ÀÇ ½ÄÀç·á ¾ÆÀÌÄÜ Imageµé
-    public Color emptyColor = new Color(1, 1, 1, 0); // ºó Ä­Àº Åõ¸íÇÏ°Ô
+    [Header("ìŠ¤í¬ë¡¤")]
+    public ScrollRect cardScrollRect;
+
+    [Header("ì¹´ë“œ ìŠ¬ë¡¯ ì„¤ì •")]
+    public List<Image> cardIcons;
+    public List<TMP_Text> cardTexts;
+    // í”„ë¦¬íŒ¹ ìì‹ì— ìƒˆë¡œ ë§Œë“  'SelectionBorder' ì´ë¯¸ì§€ë“¤ì„ ì—¬ê¸°ì— ì—°ê²°í•©ë‹ˆë‹¤.
+    public List<Image> cardHighlights;
+
+    [Header("êµì²´ìš© ì¶”ê°€ UI (ì£¼ìš´ ì¬ë£Œ)")]
+    public GameObject pendingCardUI;
+    public Image pendingIcon;
+    public TMP_Text pendingText;
 
     private bool isVisible = false;
+    private int selectedIndex = 0;
+    private float replaceOpenTime = 0f;
 
     void Start()
     {
         if (uiPanel != null) uiPanel.SetActive(false);
+
+        if (targetInventory != null)
+        {
+            targetInventory.OnReplaceModeStarted += StartReplaceMode;
+            targetInventory.OnInventoryUpdated += UpdateUI;
+        }
     }
 
     void Update()
     {
-        if (Input.GetKeyDown(toggleKey))
+        if (isVisible)
         {
-            ToggleInventory();
+            HandleUIInput();
+
+            // ğŸ’¡ê¸°ì¡´ Input.GetKeyDown ëŒ€ì‹  ì—”í„° í˜¸í™˜ ê²€ì‚¬ í•¨ìˆ˜ ì‚¬ìš©
+            if (IsToggleKeyPressed() && !targetInventory.isReplacing)
+            {
+                CloseInventory();
+            }
+            return;
+        }
+
+        // ğŸ’¡ê¸°ì¡´ Input.GetKeyDown ëŒ€ì‹  ì—”í„° í˜¸í™˜ ê²€ì‚¬ í•¨ìˆ˜ ì‚¬ìš©
+        if (IsToggleKeyPressed() && !targetInventory.isReplacing)
+        {
+            OpenInventory();
         }
     }
 
-    public void ToggleInventory()
+    // ğŸ’¡ NEW: í…í‚¤ë¦¬ìŠ¤(TKL) í‚¤ë³´ë“œ ìœ ì €ë¥¼ ìœ„í•´ ë‘ ì¢…ë¥˜ì˜ ì—”í„°í‚¤ë¥¼ ìƒí˜¸ í˜¸í™˜í•´ì£¼ëŠ” ë¡œì§
+    private bool IsToggleKeyPressed()
     {
-        isVisible = !isVisible;
-        uiPanel.SetActive(isVisible);
+        if (Input.GetKeyDown(toggleKey)) return true;
 
-        if (isVisible) UpdateUI();
+        // ì¸ìŠ¤í™í„° ì„¤ì •ì´ í‚¤íŒ¨ë“œ ì—”í„°ì¸ë° ì¼ë°˜ ì—”í„°ë¥¼ ëˆ„ë¥¸ ê²½ìš° í˜¹ì€ ê·¸ ë°˜ëŒ€ ì²˜ë¦¬
+        if (toggleKey == KeyCode.KeypadEnter && Input.GetKeyDown(KeyCode.Return)) return true;
+        if (toggleKey == KeyCode.Return && Input.GetKeyDown(KeyCode.KeypadEnter)) return true;
+
+        return false;
+    }
+
+    // ğŸ’¡ NEW: í˜¹ì‹œ ëª¨ë¥¼ í™•ì • í‚¤ ì—”í„° ë§¤í•‘ì„ ìœ„í•œ ìƒí˜¸ í˜¸í™˜ ë¡œì§
+    private bool IsConfirmKeyPressed()
+    {
+        if (Input.GetKeyDown(confirmKey)) return true;
+        if (confirmKey == KeyCode.KeypadEnter && Input.GetKeyDown(KeyCode.Return)) return true;
+        if (confirmKey == KeyCode.Return && Input.GetKeyDown(KeyCode.KeypadEnter)) return true;
+
+        return false;
+    }
+
+    private void StartReplaceMode()
+    {
+        replaceOpenTime = Time.time;
+        OpenInventory();
+    }
+
+    public void OpenInventory()
+    {
+        isVisible = true;
+        uiPanel.SetActive(true);
+        selectedIndex = 0;
+        if (targetInventory != null) targetInventory.isUIOpen = true;
+        UpdateUI();
+    }
+
+    public void CloseInventory()
+    {
+        isVisible = false;
+        uiPanel.SetActive(false);
+        if (targetInventory != null) targetInventory.isUIOpen = false;
+    }
+
+    private void HandleUIInput()
+    {
+        if (targetInventory.isReplacing && Time.time - replaceOpenTime < 0.2f) return;
+
+        int cardCount = targetInventory.GetOwnedCards().Count;
+        if (cardCount == 0) return;
+
+        int maxSelectionCount = targetInventory.isReplacing ? cardCount + 1 : cardCount;
+
+        if (Input.GetKeyDown(prevKey) || Input.GetKeyDown(altPrevKey))
+        {
+            selectedIndex--;
+            if (selectedIndex < 0) selectedIndex = maxSelectionCount - 1;
+            UpdateUI();
+            ScrollToSelected();
+        }
+        else if (Input.GetKeyDown(nextKey) || Input.GetKeyDown(altNextKey))
+        {
+            selectedIndex++;
+            if (selectedIndex >= maxSelectionCount) selectedIndex = 0;
+            UpdateUI();
+            ScrollToSelected();
+        }
+
+        // ğŸ’¡ í˜¸í™˜ ê²€ì‚¬ í•¨ìˆ˜ ì ìš©
+        if (IsConfirmKeyPressed())
+        {
+            if (targetInventory.isReplacing)
+            {
+                if (selectedIndex == cardCount)
+                {
+                    targetInventory.CancelReplace();
+                }
+                else
+                {
+                    targetInventory.ConfirmReplace(selectedIndex);
+                }
+                CloseInventory();
+            }
+            else
+            {
+                targetInventory.RemoveCard(selectedIndex);
+
+                if (selectedIndex >= targetInventory.GetOwnedCards().Count)
+                    selectedIndex = Mathf.Max(0, targetInventory.GetOwnedCards().Count - 1);
+
+                UpdateUI();
+            }
+        }
     }
 
     public void UpdateUI()
@@ -42,20 +168,130 @@ public class InventoryUI : MonoBehaviour
 
         for (int i = 0; i < cardIcons.Count; i++)
         {
+            Image iconImg = cardIcons[i];
+            if (iconImg == null) continue;
+
+            Image frameImg = (iconImg.transform.parent != null) ? iconImg.transform.parent.GetComponent<Image>() : null;
+            if (frameImg == null) frameImg = iconImg;
+
+            Image highlightImg = (i < cardHighlights.Count) ? cardHighlights[i] : null;
+
             if (i < cards.Count)
             {
-                // 1. º¯¼ö ÀÌ¸§À» Icon(´ë¹®ÀÚ ÁÖÀÇ)À¸·Î ¼öÁ¤
-                cardIcons[i].sprite = cards[i].icon;
-                cardIcons[i].color = Color.white;
+                frameImg.gameObject.SetActive(true);
+                iconImg.gameObject.SetActive(true);
+                iconImg.sprite = cards[i].icon;
 
-                // 2. Ä«µå°¡ ÀÖÀ¸¸é ½½·Ô ¿ÀºêÁ§Æ®¸¦ È°¼ºÈ­
-                cardIcons[i].gameObject.SetActive(true);
+                if (i < cardTexts.Count && cardTexts[i] != null)
+                {
+                    cardTexts[i].text = cards[i].itemName;
+                    cardTexts[i].gameObject.SetActive(true);
+                }
+
+                if (isVisible && i == selectedIndex)
+                {
+                    frameImg.transform.localScale = Vector3.one * 1.15f;
+                    frameImg.color = Color.white;
+
+                    if (highlightImg != null)
+                    {
+                        highlightImg.gameObject.SetActive(true);
+                        highlightImg.color = targetInventory.isReplacing ? new Color(1f, 0.6f, 0.6f) : new Color(0.6f, 0.8f, 1f);
+                    }
+                }
+                else
+                {
+                    frameImg.transform.localScale = Vector3.one;
+                    frameImg.color = Color.white;
+
+                    if (highlightImg != null) highlightImg.gameObject.SetActive(false);
+                }
             }
             else
             {
-                // 3. Ä«µå°¡ ¾øÀ¸¸é ½½·Ô ¿ÀºêÁ§Æ® ÀÚÃ¼¸¦ ¼û±è
-                cardIcons[i].gameObject.SetActive(false);
+                frameImg.gameObject.SetActive(false);
+                iconImg.gameObject.SetActive(false);
+
+                if (i < cardTexts.Count && cardTexts[i] != null)
+                {
+                    cardTexts[i].gameObject.SetActive(false);
+                }
+
+                frameImg.transform.localScale = Vector3.one;
+                frameImg.color = Color.white;
+
+                if (highlightImg != null) highlightImg.gameObject.SetActive(false);
             }
         }
+
+        if (targetInventory.isReplacing && targetInventory.pendingCard != null)
+        {
+            if (pendingCardUI != null) pendingCardUI.SetActive(true);
+
+            if (pendingIcon != null) pendingIcon.sprite = targetInventory.pendingCard.icon;
+            if (pendingText != null) pendingText.text = targetInventory.pendingCard.itemName;
+
+            Image pendingFrameImg = pendingCardUI.GetComponent<Image>();
+
+            Transform pendingHighlightTransform = pendingCardUI.transform.Find("SelectionBorder");
+            Image pendingHighlightImg = (pendingHighlightTransform != null) ? pendingHighlightTransform.GetComponent<Image>() : null;
+
+            if (pendingFrameImg != null)
+            {
+                if (isVisible && selectedIndex == cards.Count)
+                {
+                    pendingFrameImg.transform.localScale = Vector3.one * 1.15f;
+                    pendingFrameImg.color = Color.white;
+
+                    if (pendingHighlightImg != null)
+                    {
+                        pendingHighlightImg.gameObject.SetActive(true);
+                        pendingHighlightImg.color = new Color(1f, 0.6f, 0.6f);
+                    }
+                }
+                else
+                {
+                    pendingFrameImg.transform.localScale = Vector3.one;
+                    pendingFrameImg.color = Color.white;
+
+                    if (pendingHighlightImg != null) pendingHighlightImg.gameObject.SetActive(false);
+                }
+            }
+        }
+        else
+        {
+            if (pendingCardUI != null) pendingCardUI.SetActive(false);
+        }
+    }
+
+    private void ScrollToSelected()
+    {
+        if (cardScrollRect == null || cardIcons.Count <= 1) return;
+        // 0 ~ 1 ì •ê·œí™”: ì²« ì¹´ë“œ=0, ë§ˆì§€ë§‰=1
+        float total = targetInventory.isReplacing ? cardIcons.Count : cardIcons.Count - 1;
+        if (total <= 0) return;
+        float normalized = Mathf.Clamp01((float)selectedIndex / total);
+        // ê°€ë¡œ ìŠ¤í¬ë¡¤ì´ë©´ horizontal, ì„¸ë¡œë©´ vertical ì‚¬ìš©
+        if (cardScrollRect.horizontal)
+            StartCoroutine(SmoothScroll(true, normalized));
+        else
+            StartCoroutine(SmoothScroll(false, 1f - normalized)); // ì„¸ë¡œëŠ” ìœ„=1
+    }
+
+    private IEnumerator SmoothScroll(bool horizontal, float target)
+    {
+        float elapsed = 0f;
+        float start = horizontal ? cardScrollRect.horizontalNormalizedPosition
+                                 : cardScrollRect.verticalNormalizedPosition;
+        while (elapsed < 0.15f)
+        {
+            elapsed += Time.deltaTime;
+            float val = Mathf.Lerp(start, target, elapsed / 0.15f);
+            if (horizontal) cardScrollRect.horizontalNormalizedPosition = val;
+            else            cardScrollRect.verticalNormalizedPosition   = val;
+            yield return null;
+        }
+        if (horizontal) cardScrollRect.horizontalNormalizedPosition = target;
+        else            cardScrollRect.verticalNormalizedPosition   = target;
     }
 }

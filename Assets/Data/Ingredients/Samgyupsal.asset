@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fdd798e50451ae64eb9d568e438d8f94, type: 3}
   m_Name: Samgyupsal
   m_EditorClassIdentifier: Assembly-CSharp::IngredientSO
-  itemName: samgyupsal
+  itemName: "\uC0BC\uACB9\uC0B4"
   category: 0
-  icon: {fileID: 8548882304161029998, guid: 956a0c6c0fc40b4448795f2b3aaf543f, type: 3}
+  icon: {fileID: 7084330874984567944, guid: 91f2b43e206450842a29dbb57bd8a1e1, type: 3}

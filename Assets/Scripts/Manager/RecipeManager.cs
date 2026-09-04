@@ -8,8 +8,9 @@ public class RecipeManager : MonoBehaviour
 
     [SerializeField] private List<RecipeSO> allRecipes;
     public RecipeSO SelectedRecipe { get; private set; }
+    public IReadOnlyList<RecipeSO> AllRecipes => allRecipes;
 
-    // ÇÃ·¹ÀÌ¾î¿¡°Ô °ø°³µÉ ÈùÆ® Àç·á ¸®½ºÆ®
+    // ï¿½Ã·ï¿½ï¿½Ì¾î¿¡ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Æ®
     public List<IngredientSO> revealedHints = new List<IngredientSO>();
 
     private void Awake()
@@ -22,23 +23,23 @@ public class RecipeManager : MonoBehaviour
     {
         if (allRecipes.Count == 0) return;
 
-        // 1. ·£´ý ·¹½ÃÇÇ ¼±Á¤
+        // 1. ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
         SelectedRecipe = allRecipes[Random.Range(0, allRecipes.Count)];
 
-        // 2. ÈùÆ® »ý¼º (2°³¸¸ ¹«ÀÛÀ§·Î ÃßÃâ)
+        // 2. ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ (2ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
         GenerateHints();
 
-        Debug.Log($"¿À´ÃÀÇ ¿ä¸®: {SelectedRecipe.recipeName} (ÈùÆ® 2°³ ÃßÃâ ¿Ï·á)");
+        Debug.Log($"ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ä¸®: {SelectedRecipe.recipeName} (ï¿½ï¿½Æ® 2ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ï·ï¿½)");
     }
 
     private void GenerateHints()
     {
         revealedHints.Clear();
 
-        // ·¹½ÃÇÇÀÇ ÀüÃ¼ Àç·á ¸®½ºÆ®¸¦ º¹»çÇØ¼­ ¼¯±â
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ã¼ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ø¼ï¿½ ï¿½ï¿½ï¿½ï¿½
         List<IngredientAmount> tempIngredients = new List<IngredientAmount>(SelectedRecipe.requiredIngredients);
 
-        // °£´ÜÇÑ ¼ÅÇÃ ·ÎÁ÷
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
         for (int i = 0; i < tempIngredients.Count; i++)
         {
             int rnd = Random.Range(0, tempIngredients.Count);
@@ -47,7 +48,7 @@ public class RecipeManager : MonoBehaviour
             tempIngredients[rnd] = temp;
         }
 
-        // »óÀ§ revealCount°³¸¸ ÈùÆ®·Î ¼±Á¤
+        // ï¿½ï¿½ï¿½ï¿½ revealCountï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
         for (int i = 0; i < SelectedRecipe.revealCount && i < tempIngredients.Count; i++)
         {
             revealedHints.Add(tempIngredients[i].ingredient);
